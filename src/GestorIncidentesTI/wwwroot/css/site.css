@@ -1,0 +1,22 @@
+body { font-family: system-ui, sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
+header nav { display: flex; gap: 1.5rem; align-items: center; margin-bottom: 2rem; }
+header a { color: #38bdf8; text-decoration: none; }
+
+.metricas { display: flex; gap: 1rem; margin-bottom: 2rem; }
+.tarjeta {
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+.tarjeta .numero { font-size: 2rem; font-weight: 700; }
+.tarjeta .etiqueta { font-size: 0.85rem; color: #94a3b8; }
+
+.tabla-incidentes { width: 100%; border-collapse: collapse; }
+.tabla-incidentes th, .tabla-incidentes td {
+    text-align: left;
+    padding: 0.6rem;
+    border-bottom: 1px solid #334155;
+}
+.fila-incumplida { background: rgba(239, 68, 68, 0.15); }

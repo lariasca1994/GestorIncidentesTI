@@ -1,0 +1,15 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Secretos locales — NUNCA subir esto
+**/appsettings.Development.json
+**/appsettings.Production.json
+*.pfx
+*.pem
+
+## Otros
+.DS_Store
