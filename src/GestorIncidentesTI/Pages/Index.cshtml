@@ -1,46 +1,55 @@
-@page "/dashboard"
-@model GestorIncidentesTI.Pages.IndexModel
+@page
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Inicio";
 }
 
-<h1>Dashboard de Incidentes</h1>
+<section class="hero">
+    <h1>Gestor de Incidentes TI</h1>
+    <p>
+        Registra incidentes de soporte técnico, calcula automáticamente su SLA por
+        prioridad, y deja que el sistema escale N1 → N2 → N3 cuando el tiempo se agota —
+        con trazabilidad completa de cada cambio.
+    </p>
 
-<section class="metricas">
-    <div class="tarjeta">
-        <span class="numero">@Model.TotalAbiertos</span>
-        <span class="etiqueta">Incidentes abiertos</span>
+    <div class="badges">
+        <span>ASP.NET Core</span>
+        <span>C#</span>
+        <span>Entity Framework Core</span>
+        <span>SQL Server</span>
     </div>
-    <div class="tarjeta">
-        <span class="numero">@Model.TotalConSlaIncumplido</span>
-        <span class="etiqueta">SLA incumplido</span>
-    </div>
-    <div class="tarjeta">
-        <span class="numero">@Model.PorcentajeCumplimiento%</span>
-        <span class="etiqueta">Cumplimiento de SLA</span>
+
+    <div class="cta">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a class="boton boton-primario" asp-page="/Dashboard">Ir al Dashboard</a>
+        }
+        else
+        {
+            <a class="boton boton-primario" asp-area="Identity" asp-page="/Account/Register">Crear cuenta</a>
+            <a class="boton boton-secundario" asp-area="Identity" asp-page="/Account/Login">Ya tengo cuenta</a>
+        }
     </div>
 </section>
 
-<table class="tabla-incidentes">
-    <thead>
-        <tr>
-            <th>Título</th>
-            <th>Prioridad</th>
-            <th>Estado</th>
-            <th>Nivel</th>
-            <th>Límite SLA</th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var incidente in Model.IncidentesAbiertos)
-    {
-        <tr class="@(incidente.SlaIncumplido ? "fila-incumplida" : "")">
-            <td>@incidente.Titulo</td>
-            <td>@incidente.Prioridad</td>
-            <td>@incidente.Estado</td>
-            <td>@incidente.NivelActual</td>
-            <td>@incidente.FechaLimiteSla?.ToLocalTime().ToString("g")</td>
-        </tr>
-    }
-    </tbody>
-</table>
+<section class="features">
+    <div class="tarjeta-feature">
+        <h3>SLA automático</h3>
+        <p>Cada incidente calcula su fecha límite según la prioridad, sin intervención manual.</p>
+    </div>
+    <div class="tarjeta-feature">
+        <h3>Escalamiento en tiempo real</h3>
+        <p>Un proceso en segundo plano escala N1 → N2 → N3 cuando se supera el umbral de tiempo.</p>
+    </div>
+    <div class="tarjeta-feature">
+        <h3>Multiproyecto</h3>
+        <p>Cada usuario ve y gestiona solo los incidentes de su proyecto; el Admin ve todos.</p>
+    </div>
+    <div class="tarjeta-feature">
+        <h3>Auditoría completa</h3>
+        <p>Quién creó y quién modificó cada incidente, con historial de cada transición de estado.</p>
+    </div>
+</section>
+
+<footer class="pie">
+    Gestor de Incidentes TI — proyecto de portafolio de Luis Felipe Arias.
+</footer>

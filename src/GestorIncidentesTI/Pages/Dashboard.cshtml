@@ -1,0 +1,46 @@
+@page "/dashboard"
+@model GestorIncidentesTI.Pages.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h1>Dashboard de Incidentes</h1>
+
+<section class="metricas">
+    <div class="tarjeta">
+        <span class="numero">@Model.TotalAbiertos</span>
+        <span class="etiqueta">Incidentes abiertos</span>
+    </div>
+    <div class="tarjeta">
+        <span class="numero">@Model.TotalConSlaIncumplido</span>
+        <span class="etiqueta">SLA incumplido</span>
+    </div>
+    <div class="tarjeta">
+        <span class="numero">@Model.PorcentajeCumplimiento%</span>
+        <span class="etiqueta">Cumplimiento de SLA</span>
+    </div>
+</section>
+
+<table class="tabla-incidentes">
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Nivel</th>
+            <th>Límite SLA</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var incidente in Model.IncidentesAbiertos)
+    {
+        <tr class="@(incidente.SlaIncumplido ? "fila-incumplida" : "")">
+            <td>@incidente.Titulo</td>
+            <td>@incidente.Prioridad</td>
+            <td>@incidente.Estado</td>
+            <td>@incidente.NivelActual</td>
+            <td>@incidente.FechaLimiteSla?.ToLocalTime().ToString("g")</td>
+        </tr>
+    }
+    </tbody>
+</table>

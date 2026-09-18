@@ -23,7 +23,7 @@ using GestorIncidentesTI.Data;
 
 namespace GestorIncidentesTI.Areas.Identity.Pages.Account;
 
-[Authorize(Roles = "Admin")]
+[AllowAnonymous]
 public class RegisterModel : PageModel
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
