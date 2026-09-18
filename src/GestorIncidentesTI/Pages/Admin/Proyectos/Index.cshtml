@@ -1,0 +1,29 @@
+﻿@page
+@model GestorIncidentesTI.Pages.Admin.Proyectos.IndexModel
+@{
+    ViewData["Title"] = "Proyectos";
+}
+
+<h1>Proyectos</h1>
+
+<p><a asp-page="./Crear" class="btn btn-primary">+ Nuevo proyecto</a></p>
+
+<table class="tabla-incidentes">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Fecha de creación</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var proyecto in Model.Proyectos)
+        {
+            <tr>
+                <td>@proyecto.Nombre</td>
+                <td>@proyecto.Descripcion</td>
+                <td>@proyecto.FechaCreacion.ToLocalTime().ToString("g")</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -25,7 +25,7 @@ public class SlaService : ISlaService
     public async Task<int> EvaluarEscalamientosAsync()
     {
         var incidentesActivos = await _db.Incidentes
-            .Where(i => i.Estado == EstadoIncidente.Abierto || i.Estado == EstadoIncidente.EnProgreso)
+            .Where(i => i.Estado == EstadoIncidente.Abierto || i.Estado == EstadoIncidente.EnProgreso || i.Estado == EstadoIncidente.Escalado)
             .ToListAsync();
 
         var slaPorPrioridad = await _db.SlaDefiniciones.ToDictionaryAsync(s => s.Prioridad);
@@ -49,10 +49,17 @@ public class SlaService : ISlaService
                 _ => (NivelEscalamiento?)null
             };
 
+            bool yaVencio = ahora > incidente.FechaLimiteSla;
+
+            if (yaVencio) incidente.SlaIncumplido = true;
             if (siguienteNivel is null) continue;
 
-            bool debeEscalar = proporcionTranscurrida >= sla.UmbralEscalamiento;
-            bool yaVencio = ahora > incidente.FechaLimiteSla;
+            // N1 escala al umbral del SLA; N2 lo hace a mitad del tiempo
+            // restante, evitando dos escalaciones consecutivas inmediatas.
+            var umbral = incidente.NivelActual == NivelEscalamiento.N1
+                ? sla.UmbralEscalamiento
+                : sla.UmbralEscalamiento + ((1 - sla.UmbralEscalamiento) / 2);
+            bool debeEscalar = proporcionTranscurrida >= umbral;
 
             if (debeEscalar || yaVencio)
             {
@@ -61,8 +68,6 @@ public class SlaService : ISlaService
 
                 incidente.NivelActual = siguienteNivel.Value;
                 incidente.Estado = EstadoIncidente.Escalado;
-                if (yaVencio) incidente.SlaIncumplido = true;
-
                 _db.HistorialEstados.Add(new HistorialEstado
                 {
                     IncidenteId = incidente.Id,
@@ -89,6 +94,20 @@ public class SlaService : ISlaService
             .Where(i => i.Estado == EstadoIncidente.Resuelto || i.Estado == EstadoIncidente.Cerrado)
             .ToListAsync();
 
+        return CalcularCumplimiento(resueltos);
+    }
+
+    public async Task<double> CalcularCumplimientoAsync(IQueryable<Incidente> incidentes)
+    {
+        var resueltos = await incidentes
+            .Where(i => i.Estado == EstadoIncidente.Resuelto || i.Estado == EstadoIncidente.Cerrado)
+            .ToListAsync();
+
+        return CalcularCumplimiento(resueltos);
+    }
+
+    private static double CalcularCumplimiento(IReadOnlyCollection<Incidente> resueltos)
+    {
         if (resueltos.Count == 0) return 100.0;
 
         var cumplidos = resueltos.Count(i => !i.SlaIncumplido);

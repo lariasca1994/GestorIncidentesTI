@@ -1,0 +1,26 @@
+﻿@page
+@model GestorIncidentesTI.Pages.Admin.Proyectos.CrearModel
+@{
+    ViewData["Title"] = "Nuevo proyecto";
+}
+
+<h1>Nuevo proyecto</h1>
+
+<form method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="form-floating mb-3">
+        <input asp-for="Input.Nombre" class="form-control" placeholder="Nombre del proyecto" />
+        <label asp-for="Input.Nombre">Nombre</label>
+        <span asp-validation-for="Input.Nombre" class="text-danger"></span>
+    </div>
+    <div class="form-floating mb-3">
+        <textarea asp-for="Input.Descripcion" class="form-control" placeholder="Descripción" style="height: 100px"></textarea>
+        <label asp-for="Input.Descripcion">Descripción</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Crear proyecto</button>
+    <a asp-page="./Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

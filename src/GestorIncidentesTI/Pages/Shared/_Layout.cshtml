@@ -9,6 +9,10 @@
 <body>
     <header>
         <nav>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-page="/Admin/Proyectos/Index">Proyectos</a>
+            }
             <strong>Gestor de Incidentes TI</strong>
             <a asp-page="/Index">Dashboard</a>
         </nav>
@@ -16,5 +20,6 @@
     <main role="main">
         @RenderBody()
     </main>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -23,5 +23,6 @@ public class HistorialEstado
     public NivelEscalamiento NivelNuevo { get; set; }
 
     public string? Comentario { get; set; }
+    public string? ModificadoPorUserId { get; set; }
     public DateTime Fecha { get; set; } = DateTime.UtcNow;
 }

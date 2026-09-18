@@ -16,4 +16,5 @@ public interface ISlaService
 
     /// <summary>Calcula el % de cumplimiento de SLA sobre los incidentes resueltos/cerrados.</summary>
     Task<double> CalcularCumplimientoAsync();
+    Task<double> CalcularCumplimientoAsync(IQueryable<Incidente> incidentes);
 }

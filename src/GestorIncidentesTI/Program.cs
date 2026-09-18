@@ -1,5 +1,7 @@
 using GestorIncidentesTI.Data;
+using GestorIncidentesTI.Models;
 using GestorIncidentesTI.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,14 +11,25 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("Falta la connection string 'Default'.");
 
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireNonAlphanumeric = false;
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
+builder.Services.AddSingleton<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, GestorIncidentesTI.Services.EmailSenderFalso>();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+   options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<ISlaService, SlaService>();
 builder.Services.AddHostedService<EscalamientoBackgroundService>();
 
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
+builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -26,12 +39,30 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Aplica migraciones pendientes al iniciar — útil para el despliegue inicial
-// en Azure App Service sin tener que correr `dotnet ef` manualmente ahí.
+// Las migraciones se aplican como paso explícito de despliegue. Así la cuenta
+// de ejecución de la aplicación no necesita permisos de cambio de esquema.
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+    foreach (var rol in new[] { "Admin", "Usuario" })
+    {
+        if (!await roleManager.RoleExistsAsync(rol))
+            await roleManager.CreateAsync(new IdentityRole(rol));
+    }
+
+    var adminEmail = builder.Configuration["AdminSeed:Email"];
+    var adminPassword = builder.Configuration["AdminSeed:Password"];
+
+    if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword)
+        && await userManager.FindByEmailAsync(adminEmail) is null)
+    {
+        var admin = new ApplicationUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
+        var resultado = await userManager.CreateAsync(admin, adminPassword);
+        if (resultado.Succeeded)
+            await userManager.AddToRoleAsync(admin, "Admin");
+    }
 }
 
 if (!app.Environment.IsDevelopment())
@@ -40,16 +71,20 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+if (app.Environment.IsDevelopment())
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gestor de Incidentes TI v1");
-    c.RoutePrefix = string.Empty;
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gestor de Incidentes TI v1");
+        c.RoutePrefix = "swagger";
+    });
+}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

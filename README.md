@@ -58,21 +58,30 @@ GestorIncidentesTI/
    ```
 5. Dashboard en `https://localhost:5001`, API en `https://localhost:5001/api/incidentes`.
 
-## Despliegue en Azure (plan gratuito)
+## Despliegue en Azure
 
-1. **Azure SQL Database** (oferta free): crea la base, copia la connection string.
-2. **Azure App Service** (plan F1, gratis):
+La base de datos existente no se recrea al iniciar la aplicación. Aplica las migraciones
+como un paso controlado antes de publicar la nueva versión; la migración
+`20260917000000_AgregarAuditoriaDeUsuarios` solo agrega campos opcionales de auditoría y
+preserva los datos actuales.
+
+1. Crea un script idempotente y revísalo con el responsable de la base:
    ```bash
-   az webapp up --name gestor-incidentes-ti --resource-group <tu-rg> --sku F1 --runtime "DOTNETCORE:8.0"
+   dotnet ef migrations script --idempotent --output artifacts/migrations.sql
    ```
-3. Configura la connection string real como **Application Setting** en el portal de Azure
-   (App Service → Configuration → Connection strings) — nunca en `appsettings.json`.
-4. Al iniciar, la app aplica migraciones automáticamente (`db.Database.Migrate()` en
-   `Program.cs`), así que no hace falta correr `dotnet ef database update` manualmente en Azure.
+2. Aplica el script a Azure SQL usando una identidad de despliegue con permisos de esquema.
+3. Configura en App Service las variables `ConnectionStrings__Default`, `AdminSeed__Email`
+   y `AdminSeed__Password`; no se guardan en el repositorio.
+4. Usa App Service B1 o superior y habilita **Always On**. El escalamiento automático debe
+   convertirse en un WebJob o Azure Function programado antes de escalar a varias instancias.
+5. Configura GitHub Actions con OpenID Connect. El flujo manual de
+   `.github/workflows/deploy-azure.yml` toma sus identificadores desde variables protegidas
+   de GitHub y no utiliza secretos de publicación.
 
-## Pendiente / próximos pasos
+## Estado y publicación en GitHub
 
-- Autenticación (por ahora no hay control de acceso — usar Azure AD o Identity antes de
-  considerarlo terminado para un entorno real)
-- Notificaciones (email/Teams) cuando un incidente escala
-- Pruebas unitarias de `SlaService` (cálculo de fecha límite y umbral de escalamiento)
+- Identity y acceso por proyecto protegen API, dashboard y administración.
+- Antes de publicar, lee [SECURITY.md](SECURITY.md) y ejecuta `git status` para comprobar
+  que no se incluyen configuraciones locales, secretos, datos de prueba, `.vs`, `bin` u `obj`.
+- Faltan pruebas automatizadas y notificaciones reales (correo/Teams); son el siguiente paso
+  antes de liberar el producto a usuarios finales.

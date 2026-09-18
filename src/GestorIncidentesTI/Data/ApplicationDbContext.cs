@@ -1,9 +1,10 @@
 using GestorIncidentesTI.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorIncidentesTI.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options) { }
@@ -11,9 +12,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<Incidente> Incidentes => Set<Incidente>();
     public DbSet<SlaDefinicion> SlaDefiniciones => Set<SlaDefinicion>();
     public DbSet<HistorialEstado> HistorialEstados => Set<HistorialEstado>();
+    public DbSet<Proyecto> Proyectos => Set<Proyecto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder); // obligatorio, primero — crea las tablas de Identity (AspNetUsers, AspNetRoles, etc.)
+
         modelBuilder.Entity<Incidente>()
             .HasMany(i => i.Historial)
             .WithOne(h => h.Incidente)
@@ -31,6 +35,12 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Incidente>()
             .Property(i => i.NivelActual)
             .HasConversion<string>();
+
+        modelBuilder.Entity<Proyecto>()
+            .HasMany(p => p.Incidentes)
+            .WithOne(i => i.Proyecto)
+            .HasForeignKey(i => i.ProyectoId)
+            .OnDelete(DeleteBehavior.Restrict); // evita borrar un proyecto que ya tiene incidentes
 
         // Datos semilla de SLA por prioridad — valores de ejemplo, ajustables.
         modelBuilder.Entity<SlaDefinicion>().HasData(

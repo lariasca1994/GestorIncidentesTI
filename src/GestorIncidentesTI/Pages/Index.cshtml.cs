@@ -1,12 +1,15 @@
 using GestorIncidentesTI.Data;
 using GestorIncidentesTI.Models;
 using GestorIncidentesTI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace GestorIncidentesTI.Pages;
 
+[Authorize]
 public class IndexModel : PageModel
 {
     private readonly ApplicationDbContext _db;
@@ -25,13 +28,22 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        IncidentesAbiertos = await _db.Incidentes
+        var query = _db.Incidentes.AsQueryable();
+        if (!User.IsInRole("Admin"))
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var proyectoId = await _db.Users.Where(u => u.Id == userId)
+                .Select(u => u.ProyectoId).SingleOrDefaultAsync();
+            query = proyectoId is null ? query.Where(_ => false) : query.Where(i => i.ProyectoId == proyectoId.Value);
+        }
+
+        IncidentesAbiertos = await query
             .Where(i => i.Estado != EstadoIncidente.Resuelto && i.Estado != EstadoIncidente.Cerrado)
             .OrderBy(i => i.FechaLimiteSla)
             .ToListAsync();
 
         TotalAbiertos = IncidentesAbiertos.Count;
-        TotalConSlaIncumplido = await _db.Incidentes.CountAsync(i => i.SlaIncumplido);
-        PorcentajeCumplimiento = await _slaService.CalcularCumplimientoAsync();
+        TotalConSlaIncumplido = await query.CountAsync(i => i.SlaIncumplido);
+        PorcentajeCumplimiento = await _slaService.CalcularCumplimientoAsync(query);
     }
 }

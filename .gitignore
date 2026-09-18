@@ -8,8 +8,13 @@ obj/
 ## Secretos locales — NUNCA subir esto
 **/appsettings.Development.json
 **/appsettings.Production.json
+.env
+.env.*
+secrets/
+logs/
 *.pfx
 *.pem
+*.key
 
 ## Otros
 .DS_Store
