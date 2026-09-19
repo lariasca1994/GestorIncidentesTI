@@ -28,19 +28,19 @@
             <th>Prioridad</th>
             <th>Estado</th>
             <th>Nivel</th>
-            <th>Límite SLA</th>
+            <th>SLA</th>
         </tr>
     </thead>
     <tbody>
-    @foreach (var incidente in Model.IncidentesAbiertos)
-    {
-        <tr class="@(incidente.SlaIncumplido ? "fila-incumplida" : "")">
-            <td>@incidente.Titulo</td>
-            <td>@incidente.Prioridad</td>
-            <td>@incidente.Estado</td>
-            <td>@incidente.NivelActual</td>
-            <td>@incidente.FechaLimiteSla?.ToLocalTime().ToString("g")</td>
-        </tr>
-    }
+        @foreach (var incidente in Model.IncidentesAbiertos)
+        {
+            <tr class="fila-@incidente.NivelRiesgo">
+                <td>@incidente.Titulo</td>
+                <td><span class="badge badge-@incidente.Prioridad.ToString().ToLowerInvariant()">@incidente.Prioridad</span></td>
+                <td><span class="badge badge-@incidente.Estado.ToString().ToLowerInvariant()">@incidente.Estado</span></td>
+                <td>@incidente.NivelActual</td>
+                <td><span class="badge badge-@incidente.NivelRiesgo">@incidente.TiempoSlaTexto</span></td>
+            </tr>
+        }
     </tbody>
 </table>

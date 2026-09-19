@@ -21,7 +21,17 @@ public class DashboardModel : PageModel
         _slaService = slaService;
     }
 
-    public List<Incidente> IncidentesAbiertos { get; set; } = new();
+    public record IncidenteDashboardVm(
+        int Id,
+        string Titulo,
+        PrioridadIncidente Prioridad,
+        EstadoIncidente Estado,
+        NivelEscalamiento NivelActual,
+        string TiempoSlaTexto,
+        string NivelRiesgo // "ok" | "riesgo" | "vencido"
+    );
+
+    public List<IncidenteDashboardVm> IncidentesAbiertos { get; set; } = new();
     public int TotalAbiertos { get; set; }
     public int TotalConSlaIncumplido { get; set; }
     public double PorcentajeCumplimiento { get; set; }
@@ -37,13 +47,54 @@ public class DashboardModel : PageModel
             query = proyectoId is null ? query.Where(_ => false) : query.Where(i => i.ProyectoId == proyectoId.Value);
         }
 
-        IncidentesAbiertos = await query
+        var umbrales = await _db.SlaDefiniciones
+            .ToDictionaryAsync(s => s.Prioridad, s => s.UmbralEscalamiento);
+
+        var abiertos = await query
             .Where(i => i.Estado != EstadoIncidente.Resuelto && i.Estado != EstadoIncidente.Cerrado)
             .OrderBy(i => i.FechaLimiteSla)
             .ToListAsync();
 
+        var ahora = DateTime.UtcNow;
+
+        IncidentesAbiertos = abiertos.Select(i =>
+        {
+            string nivelRiesgo;
+            string tiempoTexto;
+
+            if (i.FechaLimiteSla is null)
+            {
+                nivelRiesgo = "ok";
+                tiempoTexto = "Sin SLA";
+            }
+            else if (ahora > i.FechaLimiteSla.Value)
+            {
+                nivelRiesgo = "vencido";
+                tiempoTexto = $"Vencido hace {FormatearTiempo(ahora - i.FechaLimiteSla.Value)}";
+            }
+            else
+            {
+                var totalVentana = (i.FechaLimiteSla.Value - i.FechaCreacion).TotalHours;
+                var transcurrido = (ahora - i.FechaCreacion).TotalHours;
+                var fraccion = totalVentana > 0 ? transcurrido / totalVentana : 1;
+                var umbral = umbrales.TryGetValue(i.Prioridad, out var u) ? u : 0.8;
+
+                nivelRiesgo = fraccion >= umbral ? "riesgo" : "ok";
+                tiempoTexto = $"Quedan {FormatearTiempo(i.FechaLimiteSla.Value - ahora)}";
+            }
+
+            return new IncidenteDashboardVm(i.Id, i.Titulo, i.Prioridad, i.Estado, i.NivelActual, tiempoTexto, nivelRiesgo);
+        }).ToList();
+
         TotalAbiertos = IncidentesAbiertos.Count;
-        TotalConSlaIncumplido = await query.CountAsync(i => i.SlaIncumplido);
+        TotalConSlaIncumplido = await query.CountAsync(i => i.SlaIncumplido)
+            + IncidentesAbiertos.Count(v => v.NivelRiesgo == "vencido");
         PorcentajeCumplimiento = await _slaService.CalcularCumplimientoAsync(query);
+    }
+
+    private static string FormatearTiempo(TimeSpan ts)
+    {
+        var abs = ts.Duration();
+        return $"{(int)abs.TotalHours}h {abs.Minutes}m";
     }
 }

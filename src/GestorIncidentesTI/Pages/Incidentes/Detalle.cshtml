@@ -1,0 +1,94 @@
+﻿@page "{id:int}"
+@model GestorIncidentesTI.Pages.Incidentes.DetalleModel
+@{
+    ViewData["Title"] = Model.Incidente.Titulo;
+}
+
+<p><a asp-page="./Index">&larr; Volver a incidentes</a></p>
+
+<h1>@Model.Incidente.Titulo</h1>
+
+<p>
+    <span class="badge badge-@Model.Incidente.Prioridad.ToString().ToLowerInvariant()">@Model.Incidente.Prioridad</span>
+    <span class="badge badge-@Model.Incidente.Estado.ToString().ToLowerInvariant()">@Model.Incidente.Estado</span>
+</p>
+
+<p><strong>Proyecto:</strong> @Model.Incidente.Proyecto?.Nombre</p>
+<p><strong>Categoría:</strong> @Model.Incidente.Categoria</p>
+<p><strong>Solicitante:</strong> @Model.Incidente.SolicitanteNombre</p>
+<p><strong>Descripción:</strong> @Model.Incidente.Descripcion</p>
+<p><strong>Creado:</strong> @Model.Incidente.FechaCreacion.ToLocalTime().ToString("g")</p>
+<p><strong>Límite SLA:</strong> @(Model.Incidente.FechaLimiteSla?.ToLocalTime().ToString("g") ?? "Sin SLA")</p>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
+@if (Model.EstadosDisponibles.Any())
+{
+    <h2>Cambiar estado</h2>
+    <form method="post" asp-page-handler="CambiarEstado">
+        <input type="hidden" name="id" value="@Model.Incidente.Id" />
+        <div class="form-floating">
+            <select asp-for="NuevoEstado" class="form-select">
+                <option value="">-- Selecciona el nuevo estado --</option>
+                @foreach (var estado in Model.EstadosDisponibles)
+                {
+                    <option value="@estado">@estado</option>
+                }
+            </select>
+            <label asp-for="NuevoEstado">Nuevo estado</label>
+        </div>
+        <div class="form-floating">
+            <textarea asp-for="NuevoComentario" class="form-control" rows="2"></textarea>
+            <label asp-for="NuevoComentario">Comentario (opcional)</label>
+        </div>
+        <button type="submit" class="btn">Actualizar estado</button>
+    </form>
+}
+else
+{
+    <p><em>Este incidente está cerrado, no admite más cambios de estado.</em></p>
+}
+
+<h2>Agregar comentario</h2>
+<form method="post" asp-page-handler="Comentario">
+    <input type="hidden" name="id" value="@Model.Incidente.Id" />
+    <div class="form-floating">
+        <textarea name="NuevoComentario" class="form-control" rows="2"></textarea>
+        <label>Comentario</label>
+    </div>
+    <button type="submit" class="boton boton-secundario">Comentar</button>
+</form>
+
+<h2>Historial</h2>
+<table class="tabla-incidentes">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Cambio</th>
+            <th>Comentario</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var h in Model.Incidente.Historial.OrderByDescending(h => h.Fecha))
+        {
+            <tr>
+                <td>@h.Fecha.ToLocalTime().ToString("g")</td>
+                <td>
+                    @if (h.EstadoAnterior == h.EstadoNuevo)
+                    {
+                        <span>Comentario</span>
+                    }
+                    else
+                    {
+                        <span>@h.EstadoAnterior &rarr; @h.EstadoNuevo</span>
+                    }
+                </td>
+                <td>@h.Comentario</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

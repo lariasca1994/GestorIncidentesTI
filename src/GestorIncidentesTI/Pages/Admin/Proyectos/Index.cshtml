@@ -23,6 +23,7 @@
                 <td>@proyecto.Nombre</td>
                 <td>@proyecto.Descripcion</td>
                 <td>@proyecto.FechaCreacion.ToLocalTime().ToString("g")</td>
+                <a asp-page="/Incidentes/Index" asp-route-proyectoId="@proyecto.Id">Ver incidentes</a>
             </tr>
         }
     </tbody>

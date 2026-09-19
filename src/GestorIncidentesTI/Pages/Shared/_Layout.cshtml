@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] - Gestor de Incidentes TI</title>
-    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script>
         (function () {
             var guardado = localStorage.getItem("tema") || "dark";
@@ -24,6 +24,10 @@
             @if (User.IsInRole("Admin"))
             {
                 <a asp-page="/Admin/Proyectos/Index">Proyectos</a>
+            }
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-page="/Incidentes/Index">Incidentes</a>
             }
             <partial name="_LoginPartial" />
             <button class="theme-toggle" id="toggleTema" title="Cambiar tema" type="button">🌓</button>

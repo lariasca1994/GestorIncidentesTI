@@ -1,0 +1,58 @@
+﻿@page
+@model GestorIncidentesTI.Pages.Incidentes.CrearModel
+@{
+    ViewData["Title"] = "Nuevo incidente";
+}
+
+<h1>Nuevo incidente</h1>
+
+<form method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    @if (Model.EsAdmin)
+    {
+        <div class="form-floating">
+            <select asp-for="Input.ProyectoId" asp-items="Model.ProyectosDisponibles" class="form-select">
+                <option value="">-- Selecciona un proyecto --</option>
+            </select>
+            <label asp-for="Input.ProyectoId">Proyecto</label>
+            <span asp-validation-for="Input.ProyectoId" class="text-danger"></span>
+        </div>
+    }
+
+    <div class="form-floating">
+        <input asp-for="Input.Titulo" class="form-control" />
+        <label asp-for="Input.Titulo">Título</label>
+        <span asp-validation-for="Input.Titulo" class="text-danger"></span>
+    </div>
+
+    <div class="form-floating">
+        <textarea asp-for="Input.Descripcion" class="form-control" rows="4"></textarea>
+        <label asp-for="Input.Descripcion">Descripción</label>
+        <span asp-validation-for="Input.Descripcion" class="text-danger"></span>
+    </div>
+
+    <div class="form-floating">
+        <input asp-for="Input.Categoria" class="form-control" />
+        <label asp-for="Input.Categoria">Categoría</label>
+        <span asp-validation-for="Input.Categoria" class="text-danger"></span>
+    </div>
+
+    <div class="form-floating">
+        <select asp-for="Input.Prioridad" class="form-select" asp-items="Html.GetEnumSelectList<GestorIncidentesTI.Models.PrioridadIncidente>()"></select>
+        <label asp-for="Input.Prioridad">Prioridad</label>
+        <span asp-validation-for="Input.Prioridad" class="text-danger"></span>
+    </div>
+
+    <div class="form-floating">
+        <input asp-for="Input.SolicitanteNombre" class="form-control" />
+        <label asp-for="Input.SolicitanteNombre">Solicitante</label>
+        <span asp-validation-for="Input.SolicitanteNombre" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="boton boton-primario">Crear incidente</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

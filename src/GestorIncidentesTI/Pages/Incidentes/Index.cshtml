@@ -1,0 +1,49 @@
+﻿@page
+@model GestorIncidentesTI.Pages.Incidentes.IndexModel
+@{
+    ViewData["Title"] = "Incidentes";
+}
+
+<h1>@(Model.NombreProyectoFiltro is not null ? $"Incidentes — {Model.NombreProyectoFiltro}" : "Incidentes")</h1>
+
+<p>
+    <a class="boton boton-primario" asp-page="./Crear" asp-route-proyectoId="@Model.ProyectoIdFiltro">+ Nuevo incidente</a>
+    @if (Model.EsAdmin && Model.ProyectoIdFiltro is not null)
+    {
+        <a class="boton boton-secundario" asp-page="./Index">Ver todos los proyectos</a>
+    }
+</p>
+
+<table class="tabla-incidentes">
+    <thead>
+        <tr>
+            <th>Título</th>
+            @if (Model.EsAdmin && Model.ProyectoIdFiltro is null)
+            {
+                <th>Proyecto</th>
+            }
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Nivel</th>
+            <th>Límite SLA</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var incidente in Model.Incidentes)
+        {
+            <tr class="@(incidente.SlaIncumplido ? "fila-incumplida" : "")">
+                <td>@incidente.Titulo</td>
+                @if (Model.EsAdmin && Model.ProyectoIdFiltro is null)
+                {
+                    <td>@incidente.Proyecto?.Nombre</td>
+                }
+                <td><span class="badge badge-@incidente.Prioridad.ToString().ToLowerInvariant()">@incidente.Prioridad</span></td>
+                <td><span class="badge badge-@incidente.Estado.ToString().ToLowerInvariant()">@incidente.Estado</span></td>
+                <td>@incidente.NivelActual</td>
+                <td>@incidente.FechaLimiteSla?.ToLocalTime().ToString("g")</td>
+                <td><a asp-page="./Detalle" asp-route-id="@incidente.Id">Ver</a></td>
+            </tr>
+        }
+    </tbody>
+</table>

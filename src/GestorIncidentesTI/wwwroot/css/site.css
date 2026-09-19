@@ -112,3 +112,189 @@ main { max-width: 960px; margin: 0 auto; padding: 2rem; }
 .tabla-incidentes { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .tabla-incidentes th, .tabla-incidentes td { text-align: left; padding: 0.6rem; border-bottom: 1px solid var(--border); }
 .fila-incumplida { background: var(--danger-bg); }
+
+.fila-incumplida,
+.fila-vencido {
+    background: var(--danger-bg);
+}
+
+.fila-riesgo {
+    background: rgba(234, 179, 8, 0.12);
+}
+
+.fila-ok {
+    background: transparent;
+}
+
+/* ---- Formularios (Identity: Login, Register, etc. y formularios propios) ---- */
+main form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    max-width: 420px;
+}
+
+.form-floating,
+.form-group {
+    margin-bottom: 1rem;
+}
+
+    .form-floating label,
+    .form-group label,
+    label {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 0.3rem;
+    }
+
+.form-control,
+.form-select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+    .form-control:focus,
+    .form-select:focus,
+    input:focus,
+    textarea:focus,
+    select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+    .form-check input {
+        width: auto;
+    }
+
+    .form-check label {
+        margin: 0;
+    }
+
+.btn,
+button[type="submit"],
+input[type="submit"] {
+    padding: 0.6rem 1.4rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    background: var(--primary);
+    color: var(--primary-contrast);
+}
+
+    .btn:hover,
+    button[type="submit"]:hover,
+    input[type="submit"]:hover {
+        background: var(--primary-hover);
+    }
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.text-danger,
+.validation-summary-errors,
+.field-validation-error {
+    color: var(--danger);
+    font-size: 0.85rem;
+    display: block;
+}
+
+a {
+    color: var(--primary);
+}
+
+    a:hover {
+        color: var(--primary-hover);
+    }
+
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-abierto {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.badge-enprogreso {
+    background: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+}
+
+.badge-escalado {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+.badge-resuelto {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+}
+
+.badge-cerrado {
+    background: var(--surface-2);
+    color: var(--text-muted);
+}
+
+.badge-baja {
+    background: var(--surface-2);
+    color: var(--text-muted);
+}
+
+.badge-media {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.badge-alta {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+.badge-critica {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.badge-ok {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+}
+
+.badge-riesgo {
+    background: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+}
+
+.badge-vencido {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
