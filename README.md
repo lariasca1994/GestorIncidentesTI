@@ -1,5 +1,10 @@
 # Gestor de Incidentes TI (mini ITSM)
 
+![.NET](https://img.shields.io/badge/.NET_8-512BD4?style=flat&logo=dotnet&logoColor=white)
+![C#](https://img.shields.io/badge/C%23-239120?style=flat&logo=c-sharp&logoColor=white)
+![Azure SQL](https://img.shields.io/badge/Azure_SQL-0078D4?style=flat&logo=microsoftazure&logoColor=white)
+![Entity Framework Core](https://img.shields.io/badge/EF_Core-512BD4?style=flat&logo=dotnet&logoColor=white)
+
 Proyecto de práctica en **ASP.NET Core 8 / C#**. Gestiona incidentes de soporte técnico con
 prioridad, SLA, escalamiento automático N1 → N2 → N3 y trazabilidad completa de cada cambio
 de estado.
@@ -97,3 +102,8 @@ a sus propios incidentes.
   que no se incluyen configuraciones locales, secretos, datos de prueba, `.vs`, `bin` u `obj`.
 - Faltan pruebas automatizadas y notificaciones reales (correo/Teams); son el siguiente paso
   antes de liberar el producto a usuarios finales.
+
+## Autor
+
+**Luis Felipe Arias Carriazo**
+[GitHub](https://github.com/lariasca1994) · [LinkedIn](https://linkedin.com/in/lfac1)
