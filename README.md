@@ -46,16 +46,16 @@ GestorIncidentesTI/
 2. Copia `appsettings.Development.json.example` a `appsettings.Development.json` y pon tu
    connection string real ahí (ese archivo está en `.gitignore`, nunca se sube).
 3. Restaura y aplica migraciones:
-   ```bash
+```bash
    cd src/GestorIncidentesTI
    dotnet restore
    dotnet ef migrations add InicialSchema
    dotnet ef database update
-   ```
+```
 4. Corre la app:
-   ```bash
+```bash
    dotnet run
-   ```
+```
 5. Dashboard en `https://localhost:5001`, API en `https://localhost:5001/api/incidentes`.
 
 ## Despliegue en Azure
@@ -66,9 +66,9 @@ como un paso controlado antes de publicar la nueva versión; la migración
 preserva los datos actuales.
 
 1. Crea un script idempotente y revísalo con el responsable de la base:
-   ```bash
+```bash
    dotnet ef migrations script --idempotent --output artifacts/migrations.sql
-   ```
+```
 2. Aplica el script a Azure SQL usando una identidad de despliegue con permisos de esquema.
 3. Configura en App Service las variables `ConnectionStrings__Default`, `AdminSeed__Email`
    y `AdminSeed__Password`; no se guardan en el repositorio.
@@ -77,6 +77,18 @@ preserva los datos actuales.
 5. Configura GitHub Actions con OpenID Connect. El flujo manual de
    `.github/workflows/deploy-azure.yml` toma sus identificadores desde variables protegidas
    de GitHub y no utiliza secretos de publicación.
+
+## Datos de prueba
+
+La aplicación ya cuenta con proyectos e incidentes de ejemplo para evaluar el flujo completo
+sin necesidad de crear datos manualmente: distintos estados (abierto, en progreso, escalado,
+resuelto, cerrado) y niveles de cumplimiento de SLA (a tiempo, en riesgo, vencido), repartidos
+en proyectos temáticos de infraestructura y desarrollo (red, cloud, identidad, monitoreo,
+facturación, entre otros).
+
+Solo el rol **Admin** puede crear y administrar proyectos. Los usuarios con rol **Usuario**
+quedan asociados a un proyecto específico y, desde ahí, registran, comentan y dan seguimiento
+a sus propios incidentes.
 
 ## Estado y publicación en GitHub
 
