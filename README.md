@@ -4,6 +4,7 @@
 ![C#](https://img.shields.io/badge/C%23-239120?style=flat&logo=c-sharp&logoColor=white)
 ![Azure SQL](https://img.shields.io/badge/Azure_SQL-0078D4?style=flat&logo=microsoftazure&logoColor=white)
 ![Entity Framework Core](https://img.shields.io/badge/EF_Core-512BD4?style=flat&logo=dotnet&logoColor=white)
+![Azure Container Apps](https://img.shields.io/badge/Azure_Container_Apps-0078D4?style=flat&logo=microsoftazure&logoColor=white)
 
 Proyecto de práctica en **ASP.NET Core 8 / C#**. Gestiona incidentes de soporte técnico con
 prioridad, SLA, escalamiento automático N1 → N2 → N3 y trazabilidad completa de cada cambio
@@ -12,6 +13,10 @@ de estado.
 > Nota: C# / .NET no forma parte de mis certificaciones formales actuales — este es un
 > proyecto autodidacta para aplicar en código la experiencia real en gestión de incidentes,
 > SLA e ITIL v4.
+
+## Demo en vivo
+
+**Aplicación:** [gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io](https://gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io/)
 
 ## Funcionalidades
 
@@ -65,21 +70,22 @@ GestorIncidentesTI/
 
 ## Despliegue en Azure
 
-La base de datos existente no se recrea al iniciar la aplicación. Aplica las migraciones
-como un paso controlado antes de publicar la nueva versión; la migración
-`20260917000000_AgregarAuditoriaDeUsuarios` solo agrega campos opcionales de auditoría y
-preserva los datos actuales.
+La aplicación corre en **Azure Container Apps**, con la imagen publicada en GitHub Container
+Registry, y la base de datos en Azure SQL Database (plan gratuito). La base de datos existente
+no se recrea al iniciar la aplicación: las migraciones se aplican como un paso controlado antes
+de publicar cada nueva versión. La migración `20260917000000_AgregarAuditoriaDeUsuarios` solo
+agrega campos opcionales de auditoría y preserva los datos actuales.
 
-1. Crea un script idempotente y revísalo con el responsable de la base:
+1. Genera un script idempotente de migraciones y revísalo con el responsable de la base:
 ```bash
    dotnet ef migrations script --idempotent --output artifacts/migrations.sql
 ```
 2. Aplica el script a Azure SQL usando una identidad de despliegue con permisos de esquema.
-3. Configura en App Service las variables `ConnectionStrings__Default`, `AdminSeed__Email`
-   y `AdminSeed__Password`; no se guardan en el repositorio.
-4. Usa App Service B1 o superior y habilita **Always On**. El escalamiento automático debe
-   convertirse en un WebJob o Azure Function programado antes de escalar a varias instancias.
-5. Configura GitHub Actions con OpenID Connect. El flujo manual de
+3. Construye y publica la imagen en GitHub Container Registry.
+4. Actualiza la Container App con la nueva imagen, definiendo `ConnectionStrings__Default`,
+   `AdminSeed__Email` y `AdminSeed__Password` como variables de entorno/secrets del servicio —
+   no se guardan en el repositorio.
+5. El flujo se automatiza con GitHub Actions usando OpenID Connect: el workflow
    `.github/workflows/deploy-azure.yml` toma sus identificadores desde variables protegidas
    de GitHub y no utiliza secretos de publicación.
 
