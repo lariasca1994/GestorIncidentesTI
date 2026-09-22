@@ -33,7 +33,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
    options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<ISlaService, SlaService>();
-builder.Services.AddHostedService<EscalamientoBackgroundService>();
 
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
@@ -49,8 +48,12 @@ var app = builder.Build();
 
 // Las migraciones se aplican como paso explícito de despliegue. Así la cuenta
 // de ejecución de la aplicación no necesita permisos de cambio de esquema.
-using (var scope = app.Services.CreateScope())
+// La siembra va protegida: si la base no está disponible al arrancar (por
+// ejemplo, pausada por la cuota gratuita), se registra el error y la app
+// arranca igual en vez de caerse.
+try
 {
+    using var scope = app.Services.CreateScope();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
@@ -71,6 +74,10 @@ using (var scope = app.Services.CreateScope())
         if (resultado.Succeeded)
             await userManager.AddToRoleAsync(admin, "Admin");
     }
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "No se pudo ejecutar la siembra inicial; la base no está disponible. La app arranca igual.");
 }
 
 if (!app.Environment.IsDevelopment())
@@ -94,6 +101,10 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Va después de UseAuthentication/UseAuthorization: necesita saber si el
+// usuario inició sesión para decidir si evalúa los escalamientos.
+app.UseMiddleware<EscalamientoBajoDemandaMiddleware>();
 
 app.MapControllers();
 app.MapRazorPages();
