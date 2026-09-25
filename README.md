@@ -52,10 +52,6 @@ GestorIncidentesTI/
 
 ```mermaid
 flowchart TB
-    %% ============================================================
-    %%  DIAGRAMA DE ARQUITECTURA — GESTOR DE INCIDENTES TI
-    %%  Colores basados en las guías de marca oficiales de cada tecnología.
-    %% ============================================================
 
     subgraph Cliente["👤 Cliente"]
         Browser["Navegador Web<br/>Dashboard + API"]
