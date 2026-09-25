@@ -48,6 +48,91 @@ GestorIncidentesTI/
     ├── Services/           # Lógica de SLA y escalamiento
     └── Program.cs
 ```
+## Arquitectura
+
+```mermaid
+flowchart TB
+    %% ============================================================
+    %%  DIAGRAMA DE ARQUITECTURA — GESTOR DE INCIDENTES TI
+    %%  Colores basados en las guías de marca oficiales de cada tecnología.
+    %% ============================================================
+
+    subgraph Cliente["👤 Cliente"]
+        Browser["Navegador Web<br/>Dashboard + API"]
+    end
+
+    subgraph App["☁️ Azure Container Apps"]
+        subgraph Web["Capa de Presentación"]
+            Razor["Razor Pages<br/>Dashboard e interfaz"]
+            Identity["ASP.NET Core Identity<br/>Autenticación y autorización"]
+        end
+
+        subgraph API["Capa de API"]
+            Controllers["Controllers<br/>API REST /api/incidentes"]
+        end
+
+        subgraph Business["Capa de Negocio"]
+            SLA["Services/SLA<br/>Cálculo de fechas límite"]
+            Escalamiento["Services/Escalamiento<br/>N1 → N2 → N3"]
+            Background["BackgroundService<br/>IHostedService · escalamiento automático"]
+        end
+
+        subgraph Data["Capa de Acceso a Datos"]
+            DbContext["Data/AppDbContext<br/>EF Core 8"]
+            Models["Models<br/>Entidades · Enums · DTOs"]
+        end
+    end
+
+    subgraph AzureSQL["🗄️ Azure SQL Database"]
+        DB[("Base de datos<br/>Incidentes · SLA · Auditoría")]
+    end
+
+    subgraph GHCR["📦 GitHub Container Registry"]
+        Image["Imagen Docker<br/>Publicación de versiones"]
+    end
+
+    %% ---- Flujo de datos ----
+    Browser -->|HTTPS| Razor
+    Browser -->|REST| Controllers
+    Razor --> Identity
+    Razor --> Controllers
+    Identity --> Controllers
+    Controllers --> SLA
+    Controllers --> Escalamiento
+    Controllers --> Background
+    SLA --> DbContext
+    Escalamiento --> DbContext
+    Background --> DbContext
+    DbContext --> Models
+    DbContext -->|SQL| DB
+    Image -.->|Despliegue| App
+
+    %% ---- Colores de marca (Brand Colors) ----
+    classDef dotnet fill:#512BD4,stroke:#2D1B69,stroke-width:2px,color:#FFFFFF,rx:12,ry:12;
+    classDef azure fill:#0078D4,stroke:#004578,stroke-width:2px,color:#FFFFFF,rx:12,ry:12;
+    classDef sql fill:#CC2927,stroke:#7F1A19,stroke-width:2px,color:#FFFFFF;
+    classDef github fill:#24292E,stroke:#000000,stroke-width:2px,color:#FFFFFF,rx:8,ry:8;
+    classDef neutral fill:#F5F5F5,stroke:#CCCCCC,stroke-width:1px,color:#333333,rx:10,ry:10;
+
+    class Browser neutral;
+    class Razor,Identity,Controllers,SLA,Escalamiento,Background,DbContext,Models dotnet;
+    class DB sql;
+    class Image github;
+
+    %% ---- Formas específicas ----
+    class DB sql;
+    class SLA,Escalamiento,Background dotnet;
+
+    %% ---- Estilos de subgráficos ----
+    style Cliente fill:#FAFAFA,stroke:#DDDDDD,stroke-width:1px,rx:12,ry:12;
+    style App fill:#F3E8FF,stroke:#512BD4,stroke-width:2px,stroke-dasharray:6 4,rx:16,ry:16;
+    style Web fill:#E8E0FF,stroke:#512BD4,stroke-width:1px,rx:10,ry:10;
+    style API fill:#D6C8FF,stroke:#512BD4,stroke-width:1px,rx:10,ry:10;
+    style Business fill:#C4B0FF,stroke:#512BD4,stroke-width:1px,rx:10,ry:10;
+    style Data fill:#B09AFF,stroke:#512BD4,stroke-width:1px,rx:10,ry:10;
+    style AzureSQL fill:#FFF0F0,stroke:#CC2927,stroke-width:2px,stroke-dasharray:6 4,rx:16,ry:16;
+    style GHCR fill:#F0F0F0,stroke:#24292E,stroke-width:2px,stroke-dasharray:6 4,rx:16,ry:16;
+```
 
 ## Correr localmente
 
