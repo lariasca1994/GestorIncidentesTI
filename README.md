@@ -1,14 +1,32 @@
 # Gestor de Incidentes TI (mini ITSM)
 
-![.NET](https://img.shields.io/badge/.NET_8-512BD4?style=flat&logo=dotnet&logoColor=white)
-![C#](https://img.shields.io/badge/C%23-239120?style=flat&logo=c-sharp&logoColor=white)
-![Azure SQL](https://img.shields.io/badge/Azure_SQL-0078D4?style=flat&logo=microsoftazure&logoColor=white)
-![Entity Framework Core](https://img.shields.io/badge/EF_Core-512BD4?style=flat&logo=dotnet&logoColor=white)
-![Azure Container Apps](https://img.shields.io/badge/Azure_Container_Apps-0078D4?style=flat&logo=microsoftazure&logoColor=white)
+<p>
+  <a href="https://gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io/"><img src="docs/demo-badge.svg" alt="Abrir la demo en vivo" height="32"></a>
+  <a href="https://frontend-nine-topaz-99.vercel.app"><img src="https://portafolio-status.onrender.com/api/status/gestor-incidentes-ti/badge.svg" alt="Estado en vivo del proyecto" height="32"></a>
+  <a href="https://d4i3vsgw7xwmh.cloudfront.net"><img src="https://portafolio-status.onrender.com/api/status/gestor-incidentes-ti/qa-badge.svg" alt="Fecha y resultado de la última prueba E2E" height="32"></a>
+</p>
+
+![.NET](https://img.shields.io/badge/.NET_8-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
+![Azure SQL](https://img.shields.io/badge/Azure_SQL-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
+![Entity Framework Core](https://img.shields.io/badge/EF_Core-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![Azure Container Apps](https://img.shields.io/badge/Azure_Container_Apps-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
 
 Proyecto de práctica en **ASP.NET Core 8 / C#**. Gestiona incidentes de soporte técnico con
 prioridad, SLA, escalamiento automático N1 → N2 → N3 y trazabilidad completa de cada cambio
 de estado.
+
+### En pocas palabras
+
+- **Qué hace:** es una mesa de ayuda. Alguien reporta una falla (un
+  *incidente*), el sistema le asigna una fecha límite según su prioridad y, si
+  nadie lo resuelve a tiempo, lo **escala solo** al siguiente nivel de soporte
+  (N1 → N2 → N3).
+- **Qué muestra:** un tablero con los incidentes abiertos, el porcentaje de
+  cumplimiento de SLA y los vencidos, más el historial de cada cambio.
+- **Cómo probarlo:** entra a la [demo](https://gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io/),
+  que ya trae incidentes de ejemplo. Para correrlo en tu equipo, ve a
+  [Correr localmente](#correr-localmente).
 
 > Nota: C# / .NET no forma parte de mis certificaciones formales actuales — este es un
 > proyecto autodidacta para aplicar en código la experiencia real en gestión de incidentes,
@@ -50,85 +68,18 @@ GestorIncidentesTI/
 ```
 ## Arquitectura
 
-```mermaid
-flowchart TB
+<p align="center">
+  <img src="docs/arquitectura.svg" alt="Diagrama de arquitectura: ASP.NET Core 8 en Azure Container Apps con Razor Pages, Identity, API REST, servicios de SLA y escalamiento en segundo plano, EF Core, Azure SQL y publicación con GitHub Actions y GHCR" width="100%">
+</p>
 
-    subgraph Cliente["👤 Cliente"]
-        Browser["Navegador Web<br/>Dashboard + API"]
-    end
-
-    subgraph App["☁️ Azure Container Apps"]
-        subgraph Web["Capa de Presentación"]
-            Razor["Razor Pages<br/>Dashboard e interfaz"]
-            Identity["ASP.NET Core Identity<br/>Autenticación y autorización"]
-        end
-
-        subgraph API["Capa de API"]
-            Controllers["Controllers<br/>API REST /api/incidentes"]
-        end
-
-        subgraph Business["Capa de Negocio"]
-            SLA["Services/SLA<br/>Cálculo de fechas límite"]
-            Escalamiento["Services/Escalamiento<br/>N1 → N2 → N3"]
-            Background["BackgroundService<br/>IHostedService · escalamiento automático"]
-        end
-
-        subgraph Data["Capa de Acceso a Datos"]
-            DbContext["Data/AppDbContext<br/>EF Core 8"]
-            Models["Models<br/>Entidades · Enums · DTOs"]
-        end
-    end
-
-    subgraph AzureSQL["🗄️ Azure SQL Database"]
-        DB[("Base de datos<br/>Incidentes · SLA · Auditoría")]
-    end
-
-    subgraph GHCR["📦 GitHub Container Registry"]
-        Image["Imagen Docker<br/>Publicación de versiones"]
-    end
-
-    %% ---- Flujo de datos ----
-    Browser -->|HTTPS| Razor
-    Browser -->|REST| Controllers
-    Razor --> Identity
-    Razor --> Controllers
-    Identity --> Controllers
-    Controllers --> SLA
-    Controllers --> Escalamiento
-    Controllers --> Background
-    SLA --> DbContext
-    Escalamiento --> DbContext
-    Background --> DbContext
-    DbContext --> Models
-    DbContext -->|SQL| DB
-    Image -.->|Despliegue| App
-
-    %% ---- Colores de marca (Brand Colors) ----
-    classDef dotnet fill:#512BD4,stroke:#2D1B69,stroke-width:2px,color:#FFFFFF,rx:12,ry:12;
-    classDef azure fill:#0078D4,stroke:#004578,stroke-width:2px,color:#FFFFFF,rx:12,ry:12;
-    classDef sql fill:#CC2927,stroke:#7F1A19,stroke-width:2px,color:#FFFFFF;
-    classDef github fill:#24292E,stroke:#000000,stroke-width:2px,color:#FFFFFF,rx:8,ry:8;
-    classDef neutral fill:#F5F5F5,stroke:#CCCCCC,stroke-width:1px,color:#333333,rx:10,ry:10;
-
-    class Browser neutral;
-    class Razor,Identity,Controllers,SLA,Escalamiento,Background,DbContext,Models dotnet;
-    class DB sql;
-    class Image github;
-
-    %% ---- Formas específicas ----
-    class DB sql;
-    class SLA,Escalamiento,Background dotnet;
-
-    %% ---- Estilos de subgráficos ----
-    style Cliente fill:#FAFAFA,stroke:#DDDDDD,stroke-width:1px,rx:12,ry:12;
-    style App fill:#F3E8FF,stroke:#512BD4,stroke-width:2px,stroke-dasharray:6 4,rx:16,ry:16;
-    style Web fill:#E8E0FF,stroke:#512BD4,stroke-width:1px,rx:10,ry:10;
-    style API fill:#D6C8FF,stroke:#512BD4,stroke-width:1px,rx:10,ry:10;
-    style Business fill:#C4B0FF,stroke:#512BD4,stroke-width:1px,rx:10,ry:10;
-    style Data fill:#B09AFF,stroke:#512BD4,stroke-width:1px,rx:10,ry:10;
-    style AzureSQL fill:#FFF0F0,stroke:#CC2927,stroke-width:2px,stroke-dasharray:6 4,rx:16,ry:16;
-    style GHCR fill:#F0F0F0,stroke:#24292E,stroke-width:2px,stroke-dasharray:6 4,rx:16,ry:16;
-```
+- **Azure Container Apps** corre la aplicación ASP.NET Core 8: el dashboard
+  (Razor Pages) y la API REST, ambos protegidos con ASP.NET Identity.
+- Los **servicios de SLA** calculan la fecha límite de cada incidente; un
+  **BackgroundService** revisa periódicamente los vencidos y los escala,
+  dejando registro en la auditoría.
+- **EF Core 8** guarda todo en **Azure SQL Database**.
+- **GitHub Actions** construye la imagen, la publica en GHCR y actualiza la
+  Container App (con OpenID Connect, sin secretos de publicación).
 
 ## Correr localmente
 
