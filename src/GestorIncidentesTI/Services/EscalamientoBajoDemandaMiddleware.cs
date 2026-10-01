@@ -1,17 +1,20 @@
 namespace GestorIncidentesTI.Services;
 
 /// <summary>
-/// Evalúa los escalamientos de SLA bajo demanda: se ejecuta cuando un usuario
-/// autenticado navega por la app, como máximo una vez cada 5 minutos.
-/// Reemplaza al BackgroundService que consultaba la base cada 5 minutos las
-/// 24 horas, lo que impedía que Azure SQL sin servidor se pausara y agotaba
-/// la cuota gratuita. Sin visitas no hay consultas, y la base puede dormir.
+/// Hace el trabajo que necesita la base solo cuando alguien entra al
+/// aplicativo: al abrir la página de inicio de sesión o al navegar con sesión
+/// iniciada. La landing pública y las visitas anónimas no tocan la base, así
+/// Azure SQL sin servidor puede pausarse y no consume la cuota gratuita.
+/// - Siembra de roles y admin: una vez por arranque del contenedor.
+/// - Escalamientos de SLA: como máximo una vez cada 5 minutos.
 /// </summary>
 public class EscalamientoBajoDemandaMiddleware
 {
+    private const string RutaLogin = "/Identity/Account/Login";
     private static readonly TimeSpan IntervaloMinimo = TimeSpan.FromMinutes(5);
     private static readonly SemaphoreSlim Candado = new(1, 1);
     private static long _ultimaEjecucionTicks;
+    private static bool _siembraHecha;
 
     private readonly RequestDelegate _next;
 
@@ -23,10 +26,12 @@ public class EscalamientoBajoDemandaMiddleware
     public async Task InvokeAsync(
         HttpContext context,
         ISlaService slaService,
+        IConfiguration configuration,
         ILogger<EscalamientoBajoDemandaMiddleware> logger)
     {
-        if (context.User.Identity?.IsAuthenticated == true
-            && HttpMethods.IsGet(context.Request.Method)
+        if (HttpMethods.IsGet(context.Request.Method)
+            && (context.User.Identity?.IsAuthenticated == true
+                || context.Request.Path.StartsWithSegments(RutaLogin, StringComparison.OrdinalIgnoreCase))
             && TocaEvaluar()
             && await Candado.WaitAsync(0))
         {
@@ -34,6 +39,12 @@ public class EscalamientoBajoDemandaMiddleware
             {
                 if (TocaEvaluar())
                 {
+                    if (!_siembraHecha)
+                    {
+                        await SiembraInicial.EjecutarAsync(context.RequestServices, configuration);
+                        _siembraHecha = true;
+                    }
+
                     var escalados = await slaService.EvaluarEscalamientosAsync();
 
                     if (escalados > 0)
@@ -42,7 +53,7 @@ public class EscalamientoBajoDemandaMiddleware
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error evaluando escalamientos bajo demanda.");
+                logger.LogError(ex, "Error en la siembra o evaluación de escalamientos bajo demanda.");
             }
             finally
             {

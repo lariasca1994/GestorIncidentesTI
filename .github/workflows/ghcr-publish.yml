@@ -1,19 +1,32 @@
-name: Build and Push to GHCR
+name: Build, push and deploy to Azure Container Apps
 
+# Cada push a main publica la imagen y actualiza la Container App: no hace
+# falta redesplegar a mano. Los cambios solo de documentación no despliegan.
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: lariasca1994/gestorincidentesti
+  RESOURCE_GROUP: PersonalCsharp
+  CONTAINER_APP: gestorincidentesti
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,4 +43,25 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # OpenID Connect: sin secretos. La identidad solo tiene el rol
+      # "Container Apps Contributor" sobre esta Container App.
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # La etiqueta del commit fuerza una revisión nueva. La escala a cero
+      # (minReplicas 0) se configura en Azure y no se toca aquí.
+      - name: Deploy new revision
+        run: |
+          az containerapp update \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$CONTAINER_APP" \
+            --image "$REGISTRY/$IMAGE_NAME:${{ github.sha }}" \
+            --query "properties.latestRevisionName" -o tsv

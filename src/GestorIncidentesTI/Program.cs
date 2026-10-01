@@ -30,7 +30,10 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddSingleton<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, GestorIncidentesTI.Services.EmailSenderFalso>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-   options.UseSqlServer(connectionString));
+   // Azure SQL sin servidor tarda en reanudarse tras la pausa automática y
+   // rechaza las primeras conexiones (error 40613); los reintentos lo absorben.
+   options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure(
+       maxRetryCount: 6, maxRetryDelay: TimeSpan.FromSeconds(10), errorNumbersToAdd: null)));
 
 builder.Services.AddScoped<ISlaService, SlaService>();
 
@@ -48,37 +51,9 @@ var app = builder.Build();
 
 // Las migraciones se aplican como paso explícito de despliegue. Así la cuenta
 // de ejecución de la aplicación no necesita permisos de cambio de esquema.
-// La siembra va protegida: si la base no está disponible al arrancar (por
-// ejemplo, pausada por la cuota gratuita), se registra el error y la app
-// arranca igual en vez de caerse.
-try
-{
-    using var scope = app.Services.CreateScope();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-    foreach (var rol in new[] { "Admin", "Usuario" })
-    {
-        if (!await roleManager.RoleExistsAsync(rol))
-            await roleManager.CreateAsync(new IdentityRole(rol));
-    }
-
-    var adminEmail = builder.Configuration["AdminSeed:Email"];
-    var adminPassword = builder.Configuration["AdminSeed:Password"];
-
-    if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword)
-        && await userManager.FindByEmailAsync(adminEmail) is null)
-    {
-        var admin = new ApplicationUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
-        var resultado = await userManager.CreateAsync(admin, adminPassword);
-        if (resultado.Succeeded)
-            await userManager.AddToRoleAsync(admin, "Admin");
-    }
-}
-catch (Exception ex)
-{
-    app.Logger.LogError(ex, "No se pudo ejecutar la siembra inicial; la base no está disponible. La app arranca igual.");
-}
+// La siembra de roles y admin no corre al arrancar: la hace
+// EscalamientoBajoDemandaMiddleware cuando alguien entra al aplicativo, para
+// que el arranque del contenedor no despierte la base pausada.
 
 if (!app.Environment.IsDevelopment())
 {

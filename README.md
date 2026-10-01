@@ -113,13 +113,24 @@ agrega campos opcionales de auditoría y preserva los datos actuales.
    dotnet ef migrations script --idempotent --output artifacts/migrations.sql
 ```
 2. Aplica el script a Azure SQL usando una identidad de despliegue con permisos de esquema.
-3. Construye y publica la imagen en GitHub Container Registry.
-4. Actualiza la Container App con la nueva imagen, definiendo `ConnectionStrings__Default`,
-   `AdminSeed__Email` y `AdminSeed__Password` como variables de entorno/secrets del servicio —
-   no se guardan en el repositorio.
-5. El flujo se automatiza con GitHub Actions usando OpenID Connect: el workflow
-   `.github/workflows/deploy-azure.yml` toma sus identificadores desde variables protegidas
-   de GitHub y no utiliza secretos de publicación.
+3. Cada push a `main` dispara `.github/workflows/ghcr-publish.yml`: construye la imagen, la
+   publica en GitHub Container Registry con la etiqueta del commit y actualiza la Container App.
+   No hace falta redesplegar a mano. La autenticación con Azure usa OpenID Connect, sin
+   secretos, con una identidad que solo puede actualizar esta Container App.
+4. `ConnectionStrings__Default`, `AdminSeed__Email` y `AdminSeed__Password` viven como
+   secrets de la Container App y no se guardan en el repositorio.
+
+### Consumo de la capa gratuita
+
+- **Container App** con `minReplicas: 0`, `maxReplicas: 1` y 0.25 vCPU / 0.5 GiB: sin
+  visitas se apaga (unos 5 minutos después de la última petición) y no consume nada. La
+  primera visita tarda unos segundos en arrancar.
+- **Azure SQL sin servidor** (oferta gratuita, máximo 1 vCore): se pausa sola tras 60 minutos
+  sin consultas, y si se agota la cuota del mes se pausa en vez de cobrar.
+- La app solo consulta la base cuando alguien entra: al abrir el inicio de sesión o al
+  navegar con sesión iniciada. Ahí siembra roles y admin (una vez por arranque) y evalúa los
+  escalamientos de SLA (como máximo cada 5 minutos). La landing pública no toca la base, así
+  que los bots y monitores no la despiertan.
 
 ## Datos de prueba
 
