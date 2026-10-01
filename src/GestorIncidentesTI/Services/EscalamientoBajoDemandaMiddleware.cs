@@ -5,7 +5,7 @@ namespace GestorIncidentesTI.Services;
 /// aplicativo: al abrir la página de inicio de sesión o al navegar con sesión
 /// iniciada. La landing pública y las visitas anónimas no tocan la base, así
 /// Azure SQL sin servidor puede pausarse y no consume la cuota gratuita.
-/// - Siembra de roles y admin: una vez por arranque del contenedor.
+/// - Siembra de roles y cuentas Admin: una vez por arranque del contenedor.
 /// - Escalamientos de SLA: como máximo una vez cada 5 minutos.
 /// </summary>
 public class EscalamientoBajoDemandaMiddleware
@@ -41,7 +41,7 @@ public class EscalamientoBajoDemandaMiddleware
                 {
                     if (!_siembraHecha)
                     {
-                        await SiembraInicial.EjecutarAsync(context.RequestServices, configuration);
+                        await SiembraInicial.EjecutarAsync(context.RequestServices, configuration, logger);
                         _siembraHecha = true;
                     }
 
