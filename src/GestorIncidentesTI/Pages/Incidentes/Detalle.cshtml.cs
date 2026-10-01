@@ -1,5 +1,6 @@
-﻿using GestorIncidentesTI.Data;
+using GestorIncidentesTI.Data;
 using GestorIncidentesTI.Models;
+using GestorIncidentesTI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,10 +13,12 @@ namespace GestorIncidentesTI.Pages.Incidentes;
 public class DetalleModel : PageModel
 {
     private readonly ApplicationDbContext _db;
+    private readonly INotificador _notificador;
 
-    public DetalleModel(ApplicationDbContext db)
+    public DetalleModel(ApplicationDbContext db, INotificador notificador)
     {
         _db = db;
+        _notificador = notificador;
     }
 
     private static readonly Dictionary<EstadoIncidente, EstadoIncidente[]> Transiciones = new()
@@ -106,6 +109,16 @@ public class DetalleModel : PageModel
         });
 
         await _db.SaveChangesAsync();
+
+        if (incidente.Estado is EstadoIncidente.Resuelto or EstadoIncidente.Cerrado)
+        {
+            var actor = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+            var proyecto = await _db.Proyectos.Where(p => p.Id == incidente.ProyectoId).Select(p => p.Nombre).FirstOrDefaultAsync();
+            var (asunto, aviso) = AvisosIncidente.Completado(incidente, proyecto, actor, NuevoComentario,
+                Url.Page("/Incidentes/Detalle", null, new { id = incidente.Id }, "https"));
+            await _notificador.NotificarAsync(actor, asunto, aviso);
+        }
+
         return RedirectToPage("./Detalle", new { id });
     }
 

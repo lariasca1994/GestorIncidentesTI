@@ -37,6 +37,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<ISlaService, SlaService>();
 
+// Avisos por correo (Brevo) al crear o completar incidentes y al crear
+// proyectos. La API key va en el secret Brevo__ApiKey de la Container App.
+builder.Services.AddHttpClient<INotificador, NotificadorBrevo>(c => c.Timeout = TimeSpan.FromSeconds(10));
+
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 builder.Services.AddAuthorization();

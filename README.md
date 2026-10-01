@@ -40,7 +40,8 @@ de estado.
 
 - Registro de incidentes con categoría, prioridad y solicitante
 - Cálculo automático de fecha límite según SLA definido por prioridad
-- Escalamiento automático cuando se supera el umbral de tiempo de SLA (`BackgroundService`)
+- Escalamiento automático cuando se supera el umbral de tiempo de SLA (se evalúa al entrar al aplicativo)
+- Avisos por correo al crear, resolver o cerrar incidentes y al crear proyectos
 - Dashboard con incidentes abiertos, % de cumplimiento de SLA y SLA incumplidos
 - Historial de auditoría por cada cambio de estado o nivel
 
@@ -51,7 +52,8 @@ de estado.
 | Backend | ASP.NET Core 8 (Web API + Razor Pages) |
 | ORM | Entity Framework Core 8 |
 | Base de datos | SQL Server / Azure SQL |
-| Background jobs | `IHostedService` (in-process, sin infraestructura extra) |
+| Escalamiento | Middleware bajo demanda (sin procesos en segundo plano que mantengan la base despierta) |
+| Correo | API transaccional de Brevo (plan gratuito) |
 
 ## Estructura
 
@@ -69,14 +71,15 @@ GestorIncidentesTI/
 ## Arquitectura
 
 <p align="center">
-  <img src="docs/arquitectura.svg" alt="Diagrama de arquitectura: ASP.NET Core 8 en Azure Container Apps con Razor Pages, Identity, API REST, servicios de SLA y escalamiento en segundo plano, EF Core, Azure SQL y publicación con GitHub Actions y GHCR" width="100%">
+  <img src="docs/arquitectura.svg" alt="Diagrama de arquitectura: ASP.NET Core 8 en Azure Container Apps con Razor Pages, Identity, API REST, servicios de SLA y escalamiento bajo demanda, avisos por correo con Brevo, EF Core, Azure SQL y publicación con GitHub Actions y GHCR" width="100%">
 </p>
 
 - **Azure Container Apps** corre la aplicación ASP.NET Core 8: el dashboard
   (Razor Pages) y la API REST, ambos protegidos con ASP.NET Identity.
-- Los **servicios de SLA** calculan la fecha límite de cada incidente; un
-  **BackgroundService** revisa periódicamente los vencidos y los escala,
-  dejando registro en la auditoría.
+- Los **servicios de SLA** calculan la fecha límite de cada incidente. Los
+  vencidos se revisan y escalan cuando alguien entra al aplicativo (como máximo
+  cada 5 minutos), dejando registro en la auditoría; sin visitas no hay
+  consultas y la base puede pausarse.
 - **EF Core 8** guarda todo en **Azure SQL Database**.
 - **GitHub Actions** construye la imagen, la publica en GHCR y actualiza la
   Container App (con OpenID Connect, sin secretos de publicación).
@@ -140,17 +143,39 @@ resuelto, cerrado) y niveles de cumplimiento de SLA (a tiempo, en riesgo, vencid
 en proyectos temáticos de infraestructura y desarrollo (red, cloud, identidad, monitoreo,
 facturación, entre otros).
 
-Solo el rol **Admin** puede crear y administrar proyectos. Los usuarios con rol **Usuario**
-quedan asociados a un proyecto específico y, desde ahí, registran, comentan y dan seguimiento
-a sus propios incidentes.
+## Usuarios y roles
+
+- **Admin:** ve y gestiona todo, de todos los proyectos, y es el único que crea proyectos.
+  Las cuentas Admin son fijas: se definen en los secrets `UsuariosAdmin__N__Email` /
+  `UsuariosAdmin__N__Password` de la Container App, y la app las crea o repara (contraseña,
+  rol, desbloqueo) cada vez que arranca y alguien entra. Son las únicas con rol Admin: si
+  otra cuenta lo tuviera, pasa a Usuario. Una de ellas es la cuenta de pruebas automáticas
+  (qa-evidencia).
+- **Usuario:** se crea solo desde **Registrarme** (`/Identity/Account/Register`), eligiendo
+  el proyecto al que pertenece. Desde ahí registra, comenta y da seguimiento a los incidentes
+  de su proyecto.
+
+## Avisos por correo
+
+Cada vez que se **crea un incidente**, se **resuelve o cierra** uno, o se **crea un
+proyecto**, llega un correo a quien hizo la gestión y a los administradores
+(`Notificaciones__Admins__N`). El correo usa la paleta del sitio, ordena los datos clave
+(proyecto, estado, prioridad, nivel, SLA, quién lo gestionó) y muestra en **Notas** lo que
+escribió el usuario: la descripción al crear y el comentario al resolver o cerrar.
+
+Se envía con la API transaccional de **Brevo** (plan gratuito, 300 correos al día): la API
+key va en el secret `Brevo__ApiKey` de la Container App y el remitente
+(`Brevo__RemitenteEmail`) debe estar verificado en Brevo. Si el envío falla, la gestión se
+guarda igual y el error queda en el log. Sin API key (por ejemplo, en local) solo se
+registra en el log.
 
 ## Estado y publicación en GitHub
 
 - Identity y acceso por proyecto protegen API, dashboard y administración.
 - Antes de publicar, lee [SECURITY.md](SECURITY.md) y ejecuta `git status` para comprobar
   que no se incluyen configuraciones locales, secretos, datos de prueba, `.vs`, `bin` u `obj`.
-- Faltan pruebas automatizadas y notificaciones reales (correo/Teams); son el siguiente paso
-  antes de liberar el producto a usuarios finales.
+- Las pruebas E2E corren en [qa-evidencia](https://d4i3vsgw7xwmh.cloudfront.net) de lunes a
+  viernes a las 8:00 (hora Bogotá). Faltan pruebas unitarias.
 
 ## Autor
 

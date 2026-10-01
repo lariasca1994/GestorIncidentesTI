@@ -1,5 +1,6 @@
-﻿using GestorIncidentesTI.Data;
+using GestorIncidentesTI.Data;
 using GestorIncidentesTI.Models;
+using GestorIncidentesTI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,13 @@ public class CrearModel : PageModel
 {
     private readonly ApplicationDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly INotificador _notificador;
 
-    public CrearModel(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+    public CrearModel(ApplicationDbContext db, UserManager<ApplicationUser> userManager, INotificador notificador)
     {
         _db = db;
         _userManager = userManager;
+        _notificador = notificador;
     }
 
     [BindProperty]
@@ -49,6 +52,11 @@ public class CrearModel : PageModel
 
         _db.Proyectos.Add(proyecto);
         await _db.SaveChangesAsync();
+
+        var actor = _userManager.GetUserName(User);
+        var (asunto, aviso) = AvisosIncidente.ProyectoCreado(proyecto, actor,
+            Url.Page("/Admin/Proyectos/Index", null, null, "https"));
+        await _notificador.NotificarAsync(actor, asunto, aviso);
 
         return RedirectToPage("./Index");
     }

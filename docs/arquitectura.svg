@@ -51,7 +51,7 @@
 <text x="603.5" y="315" font-size="11" fill="#94A3B8">fecha límite por prioridad</text>
 <g filter="url(#sh)"><rect x="530.0" y="451.0" width="250.0" height="58" rx="18" fill="#162033" stroke="#9B4DCA" stroke-width="2"/><circle cx="559.0" cy="480" r="17" fill="#9B4DCA"/><g transform="translate(559.0,480)"><circle r="9" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M0,-5 v5 l3.5,2.5" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></g></g>
 <text x="586.0" y="478" font-size="13.5" font-weight="700" fill="#F1F5F9">Escalamiento automático</text>
-<text x="586.0" y="495" font-size="11" fill="#94A3B8">BackgroundService · N1 → N2 → N3</text>
+<text x="586.0" y="495" font-size="11" fill="#94A3B8">Escalamiento bajo demanda · N1 → N2 → N3</text>
 <g filter="url(#sh)"><rect x="805.0" y="361.0" width="160.0" height="58" rx="18" fill="#162033" stroke="#512BD4" stroke-width="2"/><circle cx="834.0" cy="390" r="17" fill="#512BD4"/><g transform="translate(834.0,390)"><rect x="-10" y="-8" width="20" height="16" rx="2.5" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M-10,-2.5 h20 M-10,2.8 h20 M-3.3,-8 v16" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></g></g>
 <text x="861.0" y="388" font-size="13.5" font-weight="700" fill="#F1F5F9">EF Core 8</text>
 <text x="861.0" y="405" font-size="11" fill="#94A3B8">DbContext</text>

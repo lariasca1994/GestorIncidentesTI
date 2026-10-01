@@ -15,11 +15,13 @@ public class IncidentesController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
     private readonly ISlaService _slaService;
+    private readonly INotificador _notificador;
 
-    public IncidentesController(ApplicationDbContext db, ISlaService slaService)
+    public IncidentesController(ApplicationDbContext db, ISlaService slaService, INotificador notificador)
     {
         _db = db;
         _slaService = slaService;
+        _notificador = notificador;
     }
 
     [HttpGet]
@@ -92,6 +94,12 @@ public class IncidentesController : ControllerBase
         _db.Incidentes.Add(incidente);
         await _db.SaveChangesAsync();
 
+        var actor = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+        var proyecto = await _db.Proyectos.Where(p => p.Id == incidente.ProyectoId).Select(p => p.Nombre).FirstOrDefaultAsync();
+        var (asunto, aviso) = AvisosIncidente.Creado(incidente, proyecto, actor,
+            Url.Page("/Incidentes/Detalle", null, new { id = incidente.Id }, "https"));
+        await _notificador.NotificarAsync(actor, asunto, aviso);
+
         return CreatedAtAction(nameof(Obtener), new { id = incidente.Id }, incidente);
     }
 
@@ -128,6 +136,16 @@ public class IncidentesController : ControllerBase
         });
 
         await _db.SaveChangesAsync();
+
+        if (incidente.Estado is EstadoIncidente.Resuelto or EstadoIncidente.Cerrado)
+        {
+            var actor = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+            var proyecto = await _db.Proyectos.Where(p => p.Id == incidente.ProyectoId).Select(p => p.Nombre).FirstOrDefaultAsync();
+            var (asunto, aviso) = AvisosIncidente.Completado(incidente, proyecto, actor, dto.Comentario,
+                Url.Page("/Incidentes/Detalle", null, new { id = incidente.Id }, "https"));
+            await _notificador.NotificarAsync(actor, asunto, aviso);
+        }
+
         return NoContent();
     }
 
