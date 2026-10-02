@@ -37,7 +37,11 @@ public class NotificadorBrevo : INotificador
         _logger = logger;
     }
 
-    public async Task NotificarAsync(string? emailActor, string asunto, Aviso aviso)
+    public Task NotificarAsync(string? emailActor, string asunto, Aviso aviso) =>
+        // Correo y Telegram por separado: el fallo de uno no impide el otro.
+        Task.WhenAll(EnviarCorreoAsync(emailActor, asunto, aviso), EnviarTelegramAsync(asunto, aviso));
+
+    private async Task EnviarCorreoAsync(string? emailActor, string asunto, Aviso aviso)
     {
         var actor = string.IsNullOrWhiteSpace(emailActor) ? null : emailActor.Trim();
         var vistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -100,6 +104,42 @@ public class NotificadorBrevo : INotificador
         catch (Exception ex)
         {
             _logger.LogError(ex, "No se pudo enviar el correo \"{Asunto}\".", asunto);
+        }
+    }
+
+    /// <summary>
+    /// Aviso por Telegram (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID) con el mismo
+    /// contenido del correo, resumido. Sin las variables, no hace nada.
+    /// </summary>
+    private async Task EnviarTelegramAsync(string asunto, Aviso aviso)
+    {
+        var token = _configuration["TELEGRAM_BOT_TOKEN"];
+        var chat = _configuration["TELEGRAM_CHAT_ID"];
+        if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(chat)) return;
+
+        var cuerpo = new
+        {
+            chat_id = chat.Trim(),
+            text = PlantillaCorreo.Telegram(aviso),
+            parse_mode = "HTML",
+            disable_web_page_preview = true,
+            reply_markup = aviso.Enlace is null ? null : new
+            {
+                inline_keyboard = new[] { new[] { new { text = aviso.TextoBoton, url = aviso.Enlace } } }
+            }
+        };
+
+        try
+        {
+            using var respuesta = await _http.PostAsync($"https://api.telegram.org/bot{token.Trim()}/sendMessage",
+                JsonContent.Create(cuerpo, options: SinNulos));
+            if (!respuesta.IsSuccessStatusCode)
+                _logger.LogError("Telegram rechazó el aviso \"{Asunto}\": {Estado} {Detalle}", asunto,
+                    (int)respuesta.StatusCode, await respuesta.Content.ReadAsStringAsync());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "No se pudo enviar el aviso por Telegram \"{Asunto}\".", asunto);
         }
     }
 

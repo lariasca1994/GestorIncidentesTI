@@ -142,6 +142,28 @@ public static class PlantillaCorreo
         return texto.ToString();
     }
 
+    /// <summary>
+    /// Mismo contenido para Telegram: solo admite negrita, cursiva y enlaces,
+    /// y hasta 4.096 caracteres, así que va resumido y sin estilos.
+    /// </summary>
+    public static string Telegram(Aviso aviso)
+    {
+        var texto = new StringBuilder();
+        texto.AppendLine($"🛠️ <b>{E(aviso.Encabezado)}</b> · Gestor de Incidentes TI");
+        texto.AppendLine($"<b>{E(aviso.Titulo)}</b>");
+        if (aviso.Chips.Count > 0) texto.AppendLine(E(string.Join(" · ", aviso.Chips.Select(c => c.Texto))));
+        texto.AppendLine();
+        foreach (var (campo, valor) in aviso.Detalles) texto.AppendLine($"<b>{E(campo)}:</b> {E(valor)}");
+        foreach (var (etiqueta, nota) in aviso.Notas)
+        {
+            texto.AppendLine();
+            texto.AppendLine($"📝 <i>{E(etiqueta)}</i>");
+            texto.AppendLine(E(nota.Length > 1200 ? nota[..1200] + "…" : nota));
+        }
+        var resultado = texto.ToString().TrimEnd();
+        return resultado.Length > 4000 ? resultado[..4000] : resultado;
+    }
+
     private static string E(string texto) => WebUtility.HtmlEncode(texto);
 
     private static string ConSaltos(string texto) =>
