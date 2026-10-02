@@ -155,7 +155,7 @@ facturación, entre otros).
   el proyecto al que pertenece. Desde ahí registra, comenta y da seguimiento a los incidentes
   de su proyecto.
 
-## Avisos por correo
+## Avisos por correo y Telegram
 
 Cada vez que se **crea un incidente**, se **resuelve o cierra** uno, o se **crea un
 proyecto**, llega un correo a quien hizo la gestión y a los administradores
@@ -169,13 +169,18 @@ key va en el secret `Brevo__ApiKey` de la Container App y el remitente
 guarda igual y el error queda en el log. Sin API key (por ejemplo, en local) solo se
 registra en el log.
 
+El mismo aviso llega también por **Telegram**, resumido y con un botón para abrir el
+incidente, si están configurados `TELEGRAM_BOT_TOKEN` (secret) y `TELEGRAM_CHAT_ID`. Correo y
+Telegram se envían por separado: si uno falla, el otro sale igual.
+
 ## Estado y publicación en GitHub
 
 - Identity y acceso por proyecto protegen API, dashboard y administración.
 - Antes de publicar, lee [SECURITY.md](SECURITY.md) y ejecuta `git status` para comprobar
   que no se incluyen configuraciones locales, secretos, datos de prueba, `.vs`, `bin` u `obj`.
 - Las pruebas E2E corren en [qa-evidencia](https://d4i3vsgw7xwmh.cloudfront.net) de lunes a
-  viernes a las 8:00 (hora Bogotá). Faltan pruebas unitarias.
+  viernes a las 11:00 y 17:00 (hora Bogotá): hasta el 31 de octubre de 2026 solo en la de
+  las 11:00, desde noviembre en ambas. Faltan pruebas unitarias.
 
 ## Autor
 
