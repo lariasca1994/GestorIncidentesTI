@@ -53,7 +53,7 @@ de estado.
 | ORM | Entity Framework Core 8 |
 | Base de datos | SQL Server / Azure SQL |
 | Escalamiento | Middleware bajo demanda (sin procesos en segundo plano que mantengan la base despierta) |
-| Correo | API transaccional de Brevo (plan gratuito) |
+| Correo | API transaccional de Brevo |
 
 ## Estructura
 
@@ -106,7 +106,7 @@ GestorIncidentesTI/
 ## Despliegue en Azure
 
 La aplicación corre en **Azure Container Apps**, con la imagen publicada en GitHub Container
-Registry, y la base de datos en Azure SQL Database (plan gratuito). La base de datos existente
+Registry, y la base de datos en Azure SQL Database. La base de datos existente
 no se recrea al iniciar la aplicación: las migraciones se aplican como un paso controlado antes
 de publicar cada nueva versión. La migración `20260917000000_AgregarAuditoriaDeUsuarios` solo
 agrega campos opcionales de auditoría y preserva los datos actuales.
@@ -123,13 +123,12 @@ agrega campos opcionales de auditoría y preserva los datos actuales.
 4. `ConnectionStrings__Default`, `AdminSeed__Email` y `AdminSeed__Password` viven como
    secrets de la Container App y no se guardan en el repositorio.
 
-### Consumo de la capa gratuita
+### Uso de recursos bajo demanda
 
 - **Container App** con `minReplicas: 0`, `maxReplicas: 1` y 0.25 vCPU / 0.5 GiB: sin
   visitas se apaga (unos 5 minutos después de la última petición) y no consume nada. La
   primera visita tarda unos segundos en arrancar.
-- **Azure SQL sin servidor** (oferta gratuita, máximo 1 vCore): se pausa sola tras 60 minutos
-  sin consultas, y si se agota la cuota del mes se pausa en vez de cobrar.
+- **Azure SQL sin servidor** (máximo 1 vCore): se pausa sola tras 60 minutos sin consultas.
 - La app solo consulta la base cuando alguien entra: al abrir el inicio de sesión o al
   navegar con sesión iniciada. Ahí siembra roles y admin (una vez por arranque) y evalúa los
   escalamientos de SLA (como máximo cada 5 minutos). La landing pública no toca la base, así
@@ -163,7 +162,7 @@ proyecto**, llega un correo a quien hizo la gestión y a los administradores
 (proyecto, estado, prioridad, nivel, SLA, quién lo gestionó) y muestra en **Notas** lo que
 escribió el usuario: la descripción al crear y el comentario al resolver o cerrar.
 
-Se envía con la API transaccional de **Brevo** (plan gratuito, 300 correos al día): la API
+Se envía con la API transaccional de **Brevo**: la API
 key va en el secret `Brevo__ApiKey` de la Container App y el remitente
 (`Brevo__RemitenteEmail`) debe estar verificado en Brevo. Si el envío falla, la gestión se
 guarda igual y el error queda en el log. Sin API key (por ejemplo, en local) solo se
