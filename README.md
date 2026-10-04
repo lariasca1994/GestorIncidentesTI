@@ -34,7 +34,7 @@ de estado.
 
 ## Demo en vivo
 
-**Aplicación:** [gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io](https://gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io/)
+**Aplicación:** [abrir la demo en vivo](https://gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io/)
 
 ## Funcionalidades
 
