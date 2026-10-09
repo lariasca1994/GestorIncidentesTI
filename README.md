@@ -6,13 +6,13 @@
   <a href="https://d4i3vsgw7xwmh.cloudfront.net"><img src="https://portafolio-status.onrender.com/api/status/gestor-incidentes-ti/qa-badge.svg" alt="Fecha y resultado de la última prueba E2E" height="32"></a>
 </p>
 
-![.NET](https://img.shields.io/badge/.NET_8-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![.NET](https://img.shields.io/badge/.NET_10-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
 ![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
 ![Azure SQL](https://img.shields.io/badge/Azure_SQL-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
 ![Entity Framework Core](https://img.shields.io/badge/EF_Core-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
 ![Azure Container Apps](https://img.shields.io/badge/Azure_Container_Apps-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
 
-Proyecto de práctica en **ASP.NET Core 8 / C#**. Gestiona incidentes de soporte técnico con
+Proyecto de práctica en **ASP.NET Core 10 / C#**. Gestiona incidentes de soporte técnico con
 prioridad, SLA, escalamiento automático N1 → N2 → N3 y trazabilidad completa de cada cambio
 de estado.
 
@@ -49,7 +49,7 @@ de estado.
 
 | Capa | Tecnología |
 |---|---|
-| Backend | ASP.NET Core 8 (Web API + Razor Pages) |
+| Backend | ASP.NET Core 10 (Web API + Razor Pages) |
 | ORM | Entity Framework Core 8 |
 | Base de datos | SQL Server / Azure SQL |
 | Escalamiento | Middleware bajo demanda (sin procesos en segundo plano que mantengan la base despierta) |
@@ -71,10 +71,10 @@ GestorIncidentesTI/
 ## Arquitectura
 
 <p align="center">
-  <img src="docs/arquitectura.svg" alt="Diagrama de arquitectura: ASP.NET Core 8 en Azure Container Apps con Razor Pages, Identity, API REST, servicios de SLA y escalamiento bajo demanda, avisos por correo con Brevo, EF Core, Azure SQL y publicación con GitHub Actions y GHCR" width="100%">
+  <img src="docs/arquitectura.svg" alt="Diagrama de arquitectura: ASP.NET Core 10 en Azure Container Apps con Razor Pages, Identity, API REST, servicios de SLA y escalamiento bajo demanda, avisos por correo con Brevo, EF Core, Azure SQL y publicación con GitHub Actions y GHCR" width="100%">
 </p>
 
-- **Azure Container Apps** corre la aplicación ASP.NET Core 8: el dashboard
+- **Azure Container Apps** corre la aplicación ASP.NET Core 10: el dashboard
   (Razor Pages) y la API REST, ambos protegidos con ASP.NET Identity.
 - Los **servicios de SLA** calculan la fecha límite de cada incidente. Los
   vencidos se revisan y escalan cuando alguien entra al aplicativo (como máximo
@@ -86,7 +86,7 @@ GestorIncidentesTI/
 
 ## Correr localmente
 
-1. Instala el [.NET 8 SDK](https://dotnet.microsoft.com/download) y SQL Server (o usa el
+1. Instala el [.NET 10 SDK](https://dotnet.microsoft.com/download) y SQL Server (o usa el
    contenedor: `docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=TuPasswordAqui" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest`).
 2. Copia `appsettings.Development.json.example` a `appsettings.Development.json` y pon tu
    connection string real ahí (ese archivo está en `.gitignore`, nunca se sube).
