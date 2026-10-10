@@ -65,6 +65,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Base pausada o sin cuota gratuita: página de mantenimiento en vez de error.
+app.UseMiddleware<BaseNoDisponibleMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
