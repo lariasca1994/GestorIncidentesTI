@@ -298,3 +298,26 @@ a {
     background: var(--danger-bg);
     color: var(--danger);
 }
+.nav-marca { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text) !important; }
+.nav-marca img { width: 1.75rem; height: 1.75rem; }
+
+/* ---- Responsive: tablet (1050), celular (760) y angosto (360) ---- */
+@media (max-width: 760px) {
+    header nav {
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        padding: 0.75rem max(1rem, env(safe-area-inset-right)) 0.75rem max(1rem, env(safe-area-inset-left));
+    }
+    .nav-marca strong { display: none; }
+    main { padding: 1.25rem 1rem; }
+    main form { max-width: none; }
+    .metricas { flex-wrap: wrap; }
+    .metricas .tarjeta { flex: 1 1 8rem; }
+
+    /* La tabla se desplaza dentro de su propio marco en vez de ensanchar la página. */
+    .tabla-incidentes { display: block; overflow-x: auto; white-space: nowrap; }
+}
+
+@media (max-width: 360px) {
+    main { padding-inline: 0.75rem; }
+}

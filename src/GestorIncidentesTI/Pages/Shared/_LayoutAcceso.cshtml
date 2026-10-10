@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>@ViewData["Title"] - Gestor de Incidentes TI</title>
+    <link rel="icon" href="~/iconos/icono.svg" type="image/svg+xml" />
+    <link rel="icon" href="~/favicon.ico" sizes="48x48" />
+    <link rel="apple-touch-icon" href="~/iconos/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0F2A26" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/acceso.css" asp-append-version="true" />
+    <script>
+        (function () {
+            var guardado = localStorage.getItem("tema") || "dark";
+            document.documentElement.setAttribute("data-theme", guardado);
+        })();
+    </script>
+</head>
+@* Portada común del inicio público, el ingreso y el registro: panel de
+   marca a la izquierda y la tarjeta de cada página a la derecha. *@
+<body class="portada-cuerpo">
+    <div class="portada">
+        <aside class="marca">
+            <a class="marca-logo" asp-area="" asp-page="/Index"><img src="~/iconos/icono.svg" alt="" />Gestor de Incidentes TI</a>
+
+            <div class="marca-mensaje">
+                <p class="marca-etiqueta">Soporte técnico con SLA</p>
+                <h2 class="marca-titular">El SLA corre. <span>El escalamiento, también.</span></h2>
+                <p class="marca-bajada">
+                    Cada incidente calcula su fecha límite según la prioridad y,
+                    si el tiempo se agota, sube solo de N1 a N2 y a N3, con
+                    trazabilidad de cada cambio y aviso por correo.
+                </p>
+            </div>
+
+            <div class="ticket" aria-hidden="true">
+                <div class="ticket-cabecera"><span>INC-2048 · Infraestructura</span><span class="prioridad">ALTA</span></div>
+                <p class="ticket-titulo">Servidor de correo sin respuesta</p>
+                <div class="sla"><span>SLA restante</span><span>4 h · objetivo</span></div>
+                <div class="sla-barra"></div>
+                <ul class="niveles">
+                    <li><strong>N1</strong>Mesa de ayuda</li>
+                    <li><strong>N2</strong>Especialista</li>
+                    <li><strong>N3</strong>Ingeniería</li>
+                </ul>
+            </div>
+
+            <p class="marca-pie">Proyecto de portafolio · ASP.NET Core · SQL Server</p>
+        </aside>
+
+        <main class="lado" role="main">
+            <div class="lado-tema">
+                <button class="theme-toggle" id="toggleTema" title="Cambiar tema" type="button" aria-label="Cambiar entre tema claro y oscuro">🌓</button>
+            </div>
+            <section class="tarjeta-acceso">
+                @RenderBody()
+            </section>
+        </main>
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        document.getElementById("toggleTema").addEventListener("click", function () {
+            var actual = document.documentElement.getAttribute("data-theme") || "dark";
+            var nuevo = actual === "dark" ? "light" : "dark";
+            document.documentElement.setAttribute("data-theme", nuevo);
+            localStorage.setItem("tema", nuevo);
+        });
+    </script>
+</body>
+</html>

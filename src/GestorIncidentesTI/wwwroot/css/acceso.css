@@ -1,0 +1,508 @@
+/* Portada (inicio público, ingreso y registro).
+   Identidad propia: turquesa sobre verde petróleo, oscuro por defecto como
+   el resto del sitio; el motivo es un ticket cuyo SLA se consume mientras
+   el escalamiento sube de N1 a N3. */
+
+:root {
+  --p-fondo: #0F1E1C;
+  --p-superficie: #16302C;
+  --p-campo: #1D3D37;
+  --p-borde: #2A4D46;
+  --p-texto: #E6F4F1;
+  --p-suave: #9FC4BC;
+  --p-acento: #14B8A6;
+  --p-acento-hover: #2DD4BF;
+  --p-acento-contraste: #06201C;
+  --p-acento-suave: rgba(20, 184, 166, 0.16);
+
+  --p-marca-fondo: #0A1715;
+  --p-marca-texto: #E6F4F1;
+  --p-marca-suave: #8DB3AA;
+  --p-ticket: #12262A;
+  --p-ticket-borde: #24443F;
+  --p-alerta: #F97316;
+  --p-critico: #EF4444;
+  --p-sombra: 0 18px 44px -22px rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="light"] {
+  --p-fondo: #F4FAF9;
+  --p-superficie: #FFFFFF;
+  --p-campo: #F4FAF9;
+  --p-borde: #CFE8E3;
+  --p-texto: #0F1E1C;
+  --p-suave: #45635D;
+  --p-acento: #0D9488;
+  --p-acento-hover: #0F766E;
+  --p-acento-contraste: #FFFFFF;
+  --p-acento-suave: rgba(13, 148, 136, 0.12);
+
+  --p-marca-fondo: #E1F2EE;
+  --p-marca-texto: #0F1E1C;
+  --p-marca-suave: #45635D;
+  --p-ticket: #FFFFFF;
+  --p-ticket-borde: #CFE8E3;
+  --p-sombra: 0 18px 44px -22px rgba(15, 30, 28, 0.35);
+}
+
+body.portada-cuerpo {
+  margin: 0;
+  background: var(--p-fondo);
+  color: var(--p-texto);
+}
+
+.portada {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(420px, 1fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ───── Panel de marca ───── */
+.marca {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  overflow: hidden;
+  padding: 2rem clamp(1.75rem, 5vw, 4.5rem) 2.25rem;
+  background:
+    radial-gradient(60% 50% at 0% 100%, var(--p-acento-suave), transparent 70%),
+    var(--p-marca-fondo);
+  color: var(--p-marca-texto);
+}
+
+/* Anillos concéntricos, como un cronómetro visto desde arriba. */
+.marca::before {
+  position: absolute;
+  top: -12rem;
+  right: -12rem;
+  width: 30rem;
+  height: 30rem;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, transparent 0 34px, var(--p-acento-suave) 34px 35px);
+  content: "";
+  pointer-events: none;
+}
+
+.marca-logo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.marca-logo img {
+  width: 2rem;
+  height: 2rem;
+}
+
+.marca-mensaje {
+  position: relative;
+  max-width: 34rem;
+}
+
+.marca-etiqueta {
+  margin: 0 0 0.9rem;
+  color: var(--p-acento);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.marca-titular {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 3.5vw, 2.85rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.marca-titular span {
+  display: block;
+  color: var(--p-acento);
+}
+
+.marca-bajada {
+  margin: 0;
+  color: var(--p-marca-suave);
+  line-height: 1.6;
+}
+
+/* Ticket con SLA */
+.ticket {
+  position: relative;
+  max-width: 32rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  border: 1px solid var(--p-ticket-borde);
+  border-left: 4px solid var(--p-alerta);
+  border-radius: 0.8rem;
+  background: var(--p-ticket);
+  box-shadow: var(--p-sombra);
+}
+
+.ticket-cabecera {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--p-marca-suave);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+.ticket-titulo {
+  margin: 0.4rem 0 0.9rem;
+  font-weight: 700;
+}
+
+.prioridad {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--p-alerta);
+  font-weight: 700;
+}
+
+.sla {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.sla span:last-child {
+  color: var(--p-marca-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.sla-barra {
+  height: 0.45rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--p-acento-suave);
+}
+
+/* La barra se vacía en 9 s y cambia de color al acercarse al límite. */
+.sla-barra::after {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--p-acento);
+  content: "";
+  transform-origin: left;
+  animation: consumir 9s linear infinite;
+}
+
+@keyframes consumir {
+  0% { transform: scaleX(1); background: var(--p-acento); }
+  55% { background: var(--p-acento); }
+  70% { background: var(--p-alerta); }
+  92%, 100% { transform: scaleX(0.02); background: var(--p-critico); }
+}
+
+.niveles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.niveles li {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--p-ticket-borde);
+  border-radius: 0.55rem;
+  color: var(--p-marca-suave);
+  font-size: 0.72rem;
+  animation: nivel 9s linear infinite;
+}
+
+.niveles strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+/* N1 atiende desde el inicio; N2 y N3 se activan al vencer cada umbral. */
+.niveles li:nth-child(1) { animation-name: nivel-1; }
+.niveles li:nth-child(2) { animation-name: nivel-2; }
+.niveles li:nth-child(3) { animation-name: nivel-3; }
+
+@keyframes nivel-1 {
+  0%, 45% { border-color: var(--p-acento); color: var(--p-marca-texto); background: var(--p-acento-suave); }
+  50%, 100% { border-color: var(--p-ticket-borde); color: var(--p-marca-suave); background: transparent; }
+}
+
+@keyframes nivel-2 {
+  0%, 45% { border-color: var(--p-ticket-borde); color: var(--p-marca-suave); background: transparent; }
+  50%, 78% { border-color: var(--p-alerta); color: var(--p-marca-texto); background: rgba(249, 115, 22, 0.12); }
+  82%, 100% { border-color: var(--p-ticket-borde); color: var(--p-marca-suave); background: transparent; }
+}
+
+@keyframes nivel-3 {
+  0%, 78% { border-color: var(--p-ticket-borde); color: var(--p-marca-suave); background: transparent; }
+  82%, 100% { border-color: var(--p-critico); color: var(--p-marca-texto); background: rgba(239, 68, 68, 0.12); }
+}
+
+.marca-pie {
+  position: relative;
+  margin: 0;
+  color: var(--p-marca-suave);
+  font-size: 0.8rem;
+}
+
+/* ───── Lado de la tarjeta ───── */
+/* site.css limita y centra todo <main>; aquí ocupa su columna completa. */
+.portada main.lado {
+  max-width: none;
+  margin: 0;
+}
+
+.lado {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 5rem 1.5rem 3rem;
+}
+
+.lado-tema {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+}
+
+.portada .theme-toggle {
+  margin: 0;
+}
+
+.tarjeta-acceso {
+  width: 100%;
+  max-width: 25rem;
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  border: 1px solid var(--p-borde);
+  border-radius: 1rem;
+  background: var(--p-superficie);
+  box-shadow: var(--p-sombra);
+}
+
+.tarjeta-paso {
+  margin: 0 0 0.4rem;
+  color: var(--p-acento);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tarjeta-titulo {
+  margin: 0 0 0.4rem;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+
+.tarjeta-subtitulo {
+  margin: 0 0 1.5rem;
+  color: var(--p-suave);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* site.css pinta todo <form> de main como tarjeta; aquí la tarjeta es la sección. */
+.tarjeta-acceso form {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.tarjeta-acceso label {
+  color: var(--p-texto);
+  font-weight: 600;
+}
+
+/* 16px: con menos, Safari en iPhone amplía la página al enfocar. */
+.tarjeta-acceso .form-control {
+  padding: 0.7rem 0.85rem;
+  background: var(--p-campo);
+  font-size: 1rem;
+}
+
+.tarjeta-acceso .form-control:focus {
+  box-shadow: 0 0 0 3px var(--p-acento-suave);
+}
+
+.tarjeta-acceso .recordarme {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--p-suave);
+  font-weight: 500;
+}
+
+.tarjeta-acceso .recordarme input {
+  width: auto;
+}
+
+.tarjeta-acceso button[type="submit"],
+.tarjeta-acceso .boton-primario {
+  display: block;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 0.6rem;
+  background: var(--p-acento);
+  color: var(--p-acento-contraste);
+  font-size: 1rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+.tarjeta-acceso button[type="submit"]:hover,
+.tarjeta-acceso .boton-primario:hover {
+  background: var(--p-acento-hover);
+  color: var(--p-acento-contraste);
+}
+
+.tarjeta-acceso .boton-secundario {
+  display: block;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-borde);
+  border-radius: 0.6rem;
+  color: var(--p-texto);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.tarjeta-acceso .validation-summary-errors {
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.55rem;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.tarjeta-acceso .validation-summary-errors ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.enlaces-acceso {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+  font-size: 0.88rem;
+}
+
+.enlaces-acceso a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.insignias-acceso {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.insignias-acceso li {
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--p-borde);
+  border-radius: 999px;
+  color: var(--p-suave);
+  font-size: 0.75rem;
+}
+
+/* ───── Responsive: 1050 / 760 / 360, como el resto del portafolio ───── */
+@media (max-width: 1050px) {
+  .portada {
+    grid-template-columns: minmax(0, 1fr) minmax(380px, 1fr);
+  }
+
+  .marca-bajada {
+    display: none;
+  }
+}
+
+@media (min-width: 761px) and (max-height: 640px) {
+  .ticket {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .portada {
+    position: relative;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .marca {
+    gap: 1rem;
+    padding: calc(1.25rem + env(safe-area-inset-top, 0px)) 1.25rem 3.5rem;
+  }
+
+  .marca-bajada,
+  .ticket,
+  .marca-pie {
+    display: none;
+  }
+
+  .marca-titular {
+    margin: 0;
+    font-size: 1.65rem;
+  }
+
+  .lado {
+    position: static;
+    place-items: start center;
+    margin-top: -2rem;
+    padding: 0 1rem calc(2.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .lado-tema {
+    top: calc(1rem + env(safe-area-inset-top, 0px));
+    right: 1rem;
+  }
+
+  .tarjeta-acceso {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@media (max-width: 360px) {
+  .marca {
+    padding-inline: 1rem;
+  }
+
+  .marca-titular {
+    font-size: 1.45rem;
+  }
+
+  .tarjeta-acceso {
+    padding: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sla-barra::after,
+  .niveles li {
+    animation: none;
+  }
+
+  .sla-barra::after {
+    transform: scaleX(0.35);
+    background: var(--p-alerta);
+  }
+}

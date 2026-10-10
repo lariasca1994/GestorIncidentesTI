@@ -2,8 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>@ViewData["Title"] - Gestor de Incidentes TI</title>
+    <link rel="icon" href="~/iconos/icono.svg" type="image/svg+xml" />
+    <link rel="icon" href="~/favicon.ico" sizes="48x48" />
+    <link rel="apple-touch-icon" href="~/iconos/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0F2A26" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script>
         (function () {
@@ -15,7 +19,7 @@
 <body>
     <header>
         <nav>
-            <strong>Gestor de Incidentes TI</strong>
+            <a class="nav-marca" asp-page="/Index"><img src="~/iconos/icono.svg" alt="" /><strong>Gestor de Incidentes TI</strong></a>
             <a asp-page="/Index">Inicio</a>
             @if (User.Identity?.IsAuthenticated == true)
             {

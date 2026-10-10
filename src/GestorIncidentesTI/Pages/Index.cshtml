@@ -1,55 +1,34 @@
 @page
 @{
     ViewData["Title"] = "Inicio";
+    // Portada pública: no toca la base de datos (a propósito, por la cuota
+    // de Azure SQL; el monitor de estado la consulta seguido).
+    Layout = "/Pages/Shared/_LayoutAcceso.cshtml";
 }
 
-<section class="hero">
-    <h1>Gestor de Incidentes TI</h1>
-    <p>
-        Registra incidentes de soporte técnico, calcula automáticamente su SLA por
-        prioridad, y deja que el sistema escale N1 → N2 → N3 cuando el tiempo se agota —
-        con trazabilidad completa de cada cambio.
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <p class="tarjeta-paso">Sesión iniciada</p>
+    <h1 class="tarjeta-titulo">Hola de nuevo</h1>
+    <p class="tarjeta-subtitulo">Revisa el estado de tus incidentes y sus SLA.</p>
+    <a class="boton-primario" asp-page="/Dashboard">Ir al Dashboard</a>
+    <a class="boton-secundario" asp-page="/Incidentes/Index">Ver incidentes</a>
+}
+else
+{
+    <p class="tarjeta-paso">Bienvenido</p>
+    <h1 class="tarjeta-titulo">Gestor de Incidentes TI</h1>
+    <p class="tarjeta-subtitulo">
+        Registra incidentes de soporte, mide su SLA por prioridad y deja que el
+        escalamiento N1 → N2 → N3 ocurra solo cuando el tiempo se agota.
     </p>
+    <a class="boton-primario" asp-area="Identity" asp-page="/Account/Login">Iniciar sesión</a>
+    <a class="boton-secundario" asp-area="Identity" asp-page="/Account/Register">Crear cuenta</a>
+}
 
-    <div class="badges">
-        <span>ASP.NET Core</span>
-        <span>C#</span>
-        <span>Entity Framework Core</span>
-        <span>SQL Server</span>
-    </div>
-
-    <div class="cta">
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            <a class="boton boton-primario" asp-page="/Dashboard">Ir al Dashboard</a>
-        }
-        else
-        {
-            <a class="boton boton-primario" asp-area="Identity" asp-page="/Account/Register">Crear cuenta</a>
-            <a class="boton boton-secundario" asp-area="Identity" asp-page="/Account/Login">Ya tengo cuenta</a>
-        }
-    </div>
-</section>
-
-<section class="features">
-    <div class="tarjeta-feature">
-        <h3>SLA automático</h3>
-        <p>Cada incidente calcula su fecha límite según la prioridad, sin intervención manual.</p>
-    </div>
-    <div class="tarjeta-feature">
-        <h3>Escalamiento en tiempo real</h3>
-        <p>Escala N1 → N2 → N3 automáticamente cuando se supera el umbral de tiempo, y avisa por correo cada gestión.</p>
-    </div>
-    <div class="tarjeta-feature">
-        <h3>Multiproyecto</h3>
-        <p>Cada usuario ve y gestiona solo los incidentes de su proyecto; el Admin ve todos.</p>
-    </div>
-    <div class="tarjeta-feature">
-        <h3>Auditoría completa</h3>
-        <p>Quién creó y quién modificó cada incidente, con historial de cada transición de estado.</p>
-    </div>
-</section>
-
-<footer class="pie">
-    Gestor de Incidentes TI — proyecto de portafolio de Luis Felipe Arias.
-</footer>
+<ul class="insignias-acceso">
+    <li>ASP.NET Core</li>
+    <li>C#</li>
+    <li>Entity Framework Core</li>
+    <li>SQL Server</li>
+</ul>
