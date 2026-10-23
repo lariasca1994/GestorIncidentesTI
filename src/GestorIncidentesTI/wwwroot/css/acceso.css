@@ -506,3 +506,73 @@ body.portada-cuerpo {
     background: var(--p-alerta);
   }
 }
+
+/* Verificación en dos pasos (ingreso y Seguridad) */
+.mfa-aviso {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--p-acento);
+  border-radius: 0.5rem;
+  background: var(--p-superficie-2, rgba(13, 148, 136, 0.08));
+  font-size: 0.9rem;
+}
+
+.mfa-codigo {
+  font-size: 1.4rem;
+  letter-spacing: 0.35em;
+  text-align: center;
+}
+
+.mfa-opciones {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.mfa-qr {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 0.75rem;
+}
+
+.mfa-qr svg {
+  width: 200px;
+  height: 200px;
+  padding: 8px;
+  border-radius: 0.6rem;
+  background: #ffffff;
+}
+
+.mfa-clave {
+  font-size: 0.85rem;
+  word-break: break-word;
+}
+
+.mfa-metodos {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.mfa-metodos li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--p-borde);
+  border-radius: 0.6rem;
+}
+
+.tarjeta-acceso .boton-enlace {
+  display: inline;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--p-acento);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}

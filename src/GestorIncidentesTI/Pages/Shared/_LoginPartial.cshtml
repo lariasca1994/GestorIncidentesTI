@@ -8,6 +8,7 @@
     <span style="color: var(--text-muted); font-size: 0.9rem;">
         Hola, @UserManager.GetUserName(User)
     </span>
+    <a asp-area="Identity" asp-page="/Account/Seguridad">Seguridad</a>
     <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post" style="display:inline;">
         <button type="submit" style="background:none; border:none; color: var(--primary); cursor:pointer; font: inherit; padding:0;">
             Cerrar sesión

@@ -15,6 +15,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.Password.RequireNonAlphanumeric = false;
     options.SignIn.RequireConfirmedAccount = false;
+    // Verificación en dos pasos: 5 códigos errados bloquean la cuenta 15 minutos.
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
@@ -26,6 +29,23 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Identity/Account/Login";
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
+
+// Pase del segundo paso: tras la contraseña hay 10 minutos para escribir el código.
+builder.Services.Configure<Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions>(
+    IdentityConstants.TwoFactorUserIdScheme, options => options.ExpireTimeSpan = TimeSpan.FromMinutes(10));
+
+// La revalidación periódica de la sesión rehace los claims: se conserva la marca del segundo paso.
+builder.Services.Configure<SecurityStampValidatorOptions>(options => options.OnRefreshingPrincipal = contexto =>
+{
+    if (contexto.CurrentPrincipal is not null && DosPasosObligatorioMiddleware.TieneSegundoPaso(contexto.CurrentPrincipal)
+        && contexto.NewPrincipal?.Identity is System.Security.Claims.ClaimsIdentity identidad
+        && !identidad.HasClaim("amr", DosPasosObligatorioMiddleware.ClaimMfa))
+        identidad.AddClaim(new System.Security.Claims.Claim("amr", DosPasosObligatorioMiddleware.ClaimMfa));
+    return Task.CompletedTask;
+});
+
+// Código por correo de la verificación en dos pasos (Brevo, misma clave que los avisos).
+builder.Services.AddHttpClient<DosPasos>(c => c.Timeout = TimeSpan.FromSeconds(10));
 
 builder.Services.AddSingleton<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, GestorIncidentesTI.Services.EmailSenderFalso>();
 
@@ -82,6 +102,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
+// Verificación en dos pasos obligatoria para toda sesión.
+app.UseMiddleware<DosPasosObligatorioMiddleware>();
 app.UseAuthorization();
 
 // Va después de UseAuthentication/UseAuthorization: necesita saber si el

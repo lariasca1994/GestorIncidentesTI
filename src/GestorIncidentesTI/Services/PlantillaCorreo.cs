@@ -14,7 +14,8 @@ public sealed record Aviso(
     IReadOnlyList<(string Campo, string Valor)> Detalles,
     IReadOnlyList<(string Etiqueta, string Texto)> Notas,
     string? Enlace,
-    string TextoBoton);
+    string TextoBoton,
+    string? Pie = null);
 
 /// <summary>
 /// HTML del correo con la paleta del tema claro de site.css. Estilos en línea
@@ -107,7 +108,7 @@ public static class PlantillaCorreo
 
         html.Append($"""
             <tr><td style="padding:20px 28px 22px;border-top:1px solid {Borde};font-size:12px;line-height:1.5;color:{TextoSuave};">
-              Aviso automático del Gestor de Incidentes TI. Lo reciben quien hizo la gestión y los administradores.
+              {E(aviso.Pie ?? "Aviso automático del Gestor de Incidentes TI. Lo reciben quien hizo la gestión y los administradores.")}
             </td></tr>
             </table>
             </td></tr></table>

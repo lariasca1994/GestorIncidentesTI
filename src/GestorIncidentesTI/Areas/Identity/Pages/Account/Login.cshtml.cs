@@ -14,18 +14,24 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 using GestorIncidentesTI.Data;
+using GestorIncidentesTI.Services;
 
 namespace GestorIncidentesTI.Areas.Identity.Pages.Account;
 
 public class LoginModel : PageModel
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly DosPasos _dosPasos;
     private readonly ILogger<LoginModel> _logger;
 
-    public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger)
+    public LoginModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, DosPasos dosPasos, ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
+        _userManager = userManager;
+        _dosPasos = dosPasos;
         _logger = logger;
     }
 
@@ -110,28 +116,32 @@ public class LoginModel : PageModel
 
         if (ModelState.IsValid)
         {
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-            var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("User logged in.");
-                return LocalRedirect(returnUrl);
-            }
-            if (result.RequiresTwoFactor)
-            {
-                return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-            }
+            // La contraseña sola no abre la sesión: la verificación en dos pasos es obligatoria.
+            // Con método configurado se emite el pase de Identity (10 minutos) y se pide el
+            // código; sin método, la sesión queda limitada a elegirlo (DosPasosObligatorioMiddleware).
+            var user = await _userManager.FindByEmailAsync(Input.Email);
+            var result = user is null
+                ? Microsoft.AspNetCore.Identity.SignInResult.Failed
+                : await _signInManager.CheckPasswordSignInAsync(user, Input.Password, lockoutOnFailure: false);
             if (result.IsLockedOut)
             {
                 _logger.LogWarning("User account locked out.");
                 return RedirectToPage("./Lockout");
             }
-            else
+            if (!result.Succeeded || user is null)
             {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ModelState.AddModelError(string.Empty, "Correo o contraseña incorrectos.");
                 return Page();
             }
+            if ((await _dosPasos.EstadoAsync(user)).Configurado)
+            {
+                var pase = new ClaimsIdentity(IdentityConstants.TwoFactorUserIdScheme);
+                pase.AddClaim(new Claim(ClaimTypes.Name, user.Id));
+                await HttpContext.SignInAsync(IdentityConstants.TwoFactorUserIdScheme, new ClaimsPrincipal(pase));
+                return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
+            }
+            await _signInManager.SignInAsync(user, Input.RememberMe);
+            return RedirectToPage("./Seguridad", new { ReturnUrl = returnUrl });
         }
 
         // If we got this far, something failed, redisplay form

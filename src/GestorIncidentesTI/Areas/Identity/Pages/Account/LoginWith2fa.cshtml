@@ -1,39 +1,48 @@
 @page
 @model LoginWith2faModel
 @{
-    ViewData["Title"] = "Two-factor authentication";
+    ViewData["Title"] = "Verificación en dos pasos";
+    Layout = "/Pages/Shared/_LayoutAcceso.cshtml";
+    var esApp = Model.Metodo == GestorIncidentesTI.Services.DosPasos.App;
 }
 
-<h1>@ViewData["Title"]</h1>
-<hr />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
-<div class="row">
-    <div class="col-md-4">
-        <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
-            <input asp-for="RememberMe" type="hidden" />
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label asp-for="Input.TwoFactorCode" class="form-label"></label>
-                <span asp-validation-for="Input.TwoFactorCode" class="text-danger"></span>
-            </div>
-            <div class="checkbox mb-3">
-                <label asp-for="Input.RememberMachine" class="form-label">
-                    <input asp-for="Input.RememberMachine" />
-                    @Html.DisplayNameFor(m => m.Input.RememberMachine)
-                </label>
-            </div>
-            <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-            </div>
-        </form>
-    </div>
-</div>
-<p>
-    Don't have access to your authenticator device? You can
-    <a id="recovery-code-login" asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">log in with a recovery code</a>.
+<p class="tarjeta-paso">Segundo paso</p>
+<h1 class="tarjeta-titulo">@ViewData["Title"]</h1>
+<p class="tarjeta-subtitulo">
+    @(esApp
+        ? "Escribe el código de 6 dígitos que muestra tu app autenticadora."
+        : "Escribe el código de 6 dígitos que te enviamos por correo.")
 </p>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+@if (Model.Aviso is not null)
+{
+    <p class="mfa-aviso" role="status">@Model.Aviso</p>
 }
+
+<form method="post" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" asp-route-metodo="@Model.Metodo">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="form-floating">
+        <label for="codigo" class="form-label">Código</label>
+        <input id="codigo" name="codigo" class="form-control mfa-codigo" inputmode="numeric" autocomplete="one-time-code"
+               maxlength="7" required autofocus />
+    </div>
+    <button type="submit">Verificar</button>
+</form>
+
+<div class="enlaces-acceso">
+    @if (!esApp)
+    {
+        <form method="post" asp-page-handler="Reenviar" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe">
+            <button type="submit" class="boton-enlace">Enviar un código nuevo</button>
+        </form>
+    }
+    @if (esApp && Model.Estado.Correo)
+    {
+        <a asp-route-metodo="correo" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe">Usar un código por correo</a>
+    }
+    @if (!esApp && Model.Estado.App)
+    {
+        <a asp-route-metodo="app" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe">Usar la app autenticadora</a>
+    }
+    <a asp-page="./Login">Volver al ingreso</a>
+</div>

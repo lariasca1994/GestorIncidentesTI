@@ -1,130 +1,100 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using GestorIncidentesTI.Data;
+using GestorIncidentesTI.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using GestorIncidentesTI.Data;
 
 namespace GestorIncidentesTI.Areas.Identity.Pages.Account;
 
+/// <summary>
+/// Segundo paso del ingreso: el pase de Identity (cookie TwoFactorUserId, 10 minutos) dice
+/// quién ya puso la contraseña. Se pide el código del método preferido, con la opción de
+/// usar el otro si está activo.
+/// </summary>
 public class LoginWith2faModel : PageModel
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly DosPasos _dosPasos;
     private readonly ILogger<LoginWith2faModel> _logger;
 
-    public LoginWith2faModel(
-        SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager,
-        ILogger<LoginWith2faModel> logger)
+    public LoginWith2faModel(SignInManager<ApplicationUser> signInManager, DosPasos dosPasos, ILogger<LoginWith2faModel> logger)
     {
         _signInManager = signInManager;
-        _userManager = userManager;
+        _dosPasos = dosPasos;
         _logger = logger;
     }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
     [BindProperty]
-    public InputModel Input { get; set; } = default!;
+    public string? Codigo { get; set; }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Metodo { get; set; }
+
+    [BindProperty(SupportsGet = true)]
     public bool RememberMe { get; set; }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
+    [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
-    public class InputModel
+    public EstadoDosPasos Estado { get; private set; } = new(false, false, null);
+
+    public string? Aviso { get; private set; }
+
+    public async Task<IActionResult> OnGetAsync()
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Text)]
-        [Display(Name = "Authenticator code")]
-        public string TwoFactorCode { get; set; } = default!;
+        var user = await CargarAsync();
+        if (user is null) return VolverAlIngreso();
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [Display(Name = "Remember this machine")]
-        public bool RememberMachine { get; set; }
-    }
-
-    public async Task<IActionResult> OnGetAsync(bool rememberMe, string? returnUrl = null)
-    {
-        // Ensure the user has gone through the username & password screen first
-        var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
-
-        if (user == null)
-        {
-            throw new InvalidOperationException($"Unable to load two-factor authentication user.");
-        }
-
-        ReturnUrl = returnUrl;
-        RememberMe = rememberMe;
-
+        // Con el correo, el código se envía al abrir la página (máximo 3 cada 10 minutos).
+        if (Metodo == DosPasos.Correo)
+            Aviso = await _dosPasos.EnviarCodigoAsync(user)
+                ? $"Enviamos un código a {user.Email}. Vence en 10 minutos."
+                : "Ya enviamos 3 códigos en los últimos 10 minutos. Usa el último o espera un momento.";
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync(bool rememberMe, string? returnUrl = null)
+    public async Task<IActionResult> OnPostReenviarAsync()
     {
-        if (!ModelState.IsValid)
+        Metodo = DosPasos.Correo;
+        return await OnGetAsync();
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        var user = await CargarAsync();
+        if (user is null) return VolverAlIngreso();
+
+        var resultado = await _dosPasos.VerificarAsync(user, Metodo!, Codigo);
+        if (resultado != ResultadoCodigo.Correcto)
         {
+            _logger.LogWarning("Código de verificación incorrecto para el usuario {UserId}.", user.Id);
+            ModelState.AddModelError(string.Empty, DosPasos.Mensaje(resultado));
             return Page();
         }
 
-        returnUrl = returnUrl ?? Url.Content("~/");
+        await HttpContext.SignOutAsync(IdentityConstants.TwoFactorUserIdScheme);
+        await _signInManager.SignInWithClaimsAsync(user, RememberMe,
+            new[] { new Claim("amr", DosPasosObligatorioMiddleware.ClaimMfa) });
+        _logger.LogInformation("Usuario {UserId} ingresó con verificación en dos pasos ({Metodo}).", user.Id, Metodo);
+        return LocalRedirect(Url.IsLocalUrl(ReturnUrl) ? ReturnUrl! : Url.Content("~/"));
+    }
 
+    private async Task<ApplicationUser?> CargarAsync()
+    {
         var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
-        if (user == null)
-        {
-            throw new InvalidOperationException($"Unable to load two-factor authentication user.");
-        }
+        if (user is null) return null;
+        Estado = await _dosPasos.EstadoAsync(user);
+        if (!Estado.Configurado) return null;
+        if (!DosPasos.MetodoValido(Metodo) || (Metodo == DosPasos.App && !Estado.App) || (Metodo == DosPasos.Correo && !Estado.Correo))
+            Metodo = Estado.Preferido;
+        return user;
+    }
 
-        var authenticatorCode = Input.TwoFactorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
-
-        var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, rememberMe, Input.RememberMachine);
-
-        var userId = await _userManager.GetUserIdAsync(user);
-
-        if (result.Succeeded)
-        {
-            _logger.LogInformation("User with ID '{UserId}' logged in with 2fa.", user.Id);
-            return LocalRedirect(returnUrl);
-        }
-        else if (result.IsLockedOut)
-        {
-            _logger.LogWarning("User with ID '{UserId}' account locked out.", user.Id);
-            return RedirectToPage("./Lockout");
-        }
-        else
-        {
-            _logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", user.Id);
-            ModelState.AddModelError(string.Empty, "Invalid authenticator code.");
-            return Page();
-        }
+    private IActionResult VolverAlIngreso()
+    {
+        TempData["ErrorMessage"] = "La verificación venció. Ingresa de nuevo.";
+        return RedirectToPage("./Login", new { ReturnUrl });
     }
 }

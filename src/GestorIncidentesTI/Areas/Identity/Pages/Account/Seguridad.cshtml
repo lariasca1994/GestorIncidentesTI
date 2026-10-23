@@ -1,0 +1,119 @@
+@page
+@model SeguridadModel
+@using GestorIncidentesTI.Services
+@{
+    ViewData["Title"] = Model.Eligiendo ? "Elige tu verificación en dos pasos" : "Seguridad";
+    Layout = "/Pages/Shared/_LayoutAcceso.cshtml";
+}
+
+<p class="tarjeta-paso">@(Model.Eligiendo ? "Último paso" : "Tu cuenta")</p>
+<h1 class="tarjeta-titulo">@ViewData["Title"]</h1>
+
+@if (Model.Mensaje is not null)
+{
+    <p class="mfa-aviso" role="status">@Model.Mensaje</p>
+}
+
+@if (Model.Metodo is null)
+{
+    @if (Model.Eligiendo)
+    {
+        <p class="tarjeta-subtitulo">
+            Cada ingreso pedirá, además de la contraseña, un código. Elige cómo recibirlo; después
+            podrás agregar el otro método desde Seguridad.
+        </p>
+        <div class="mfa-opciones">
+            <a class="boton-primario" asp-route-metodo="app" asp-route-returnUrl="@Model.ReturnUrl">App autenticadora (recomendado)</a>
+            <a class="boton-secundario" asp-route-metodo="correo" asp-route-returnUrl="@Model.ReturnUrl">Código por correo</a>
+        </div>
+    }
+    else
+    {
+        <p class="tarjeta-subtitulo">Verificación en dos pasos obligatoria para @Model.Email.</p>
+        <ul class="mfa-metodos">
+            <li>
+                <strong>App autenticadora</strong>
+                @if (Model.Estado.App)
+                {
+                    <span class="badge badge-ok">Activa</span>
+                }
+                else
+                {
+                    <a asp-route-metodo="app">Agregar</a>
+                }
+            </li>
+            <li>
+                <strong>Código por correo</strong>
+                @if (Model.Estado.Correo)
+                {
+                    <span class="badge badge-ok">Activo</span>
+                }
+                else
+                {
+                    <a asp-route-metodo="correo">Agregar</a>
+                }
+            </li>
+        </ul>
+        @if (Model.Estado.App && Model.Estado.Correo)
+        {
+            <form method="post" asp-page-handler="Preferido">
+                <label for="metodo" class="form-label">Método que se pide por defecto</label>
+                <select id="metodo" name="metodo" class="form-control">
+                    <option value="app" selected="@(Model.Estado.Preferido == DosPasos.App)">App autenticadora</option>
+                    <option value="correo" selected="@(Model.Estado.Preferido == DosPasos.Correo)">Código por correo</option>
+                </select>
+                <button type="submit">Guardar</button>
+            </form>
+        }
+        <div class="enlaces-acceso">
+            <a asp-area="" asp-page="/Index">Volver al inicio</a>
+        </div>
+    }
+}
+else
+{
+    @if (Model.Metodo == DosPasos.App)
+    {
+        <p class="tarjeta-subtitulo">
+            Escanea el código QR con Google Authenticator, Microsoft Authenticator u otra app y
+            escribe el código de 6 dígitos que muestra.
+        </p>
+        <div class="mfa-qr">@Html.Raw(Model.QrSvg)</div>
+        <p class="mfa-clave">¿No puedes escanear? Escribe esta clave en la app: <code>@Model.Clave</code></p>
+    }
+    else
+    {
+        <p class="tarjeta-subtitulo">Escribe el código de 6 dígitos que te enviamos por correo.</p>
+        @if (Model.Aviso is not null)
+        {
+            <p class="mfa-aviso" role="status">@Model.Aviso</p>
+        }
+    }
+
+    <form method="post" asp-page-handler="Activar" asp-route-metodo="@Model.Metodo" asp-route-returnUrl="@Model.ReturnUrl">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div class="form-floating">
+            <label for="codigo" class="form-label">Código</label>
+            <input id="codigo" name="codigo" class="form-control mfa-codigo" inputmode="numeric" autocomplete="one-time-code"
+                   maxlength="7" required autofocus />
+        </div>
+        <button type="submit">Activar</button>
+    </form>
+
+    <div class="enlaces-acceso">
+        @if (Model.Metodo == DosPasos.Correo)
+        {
+            <form method="post" asp-page-handler="Reenviar" asp-route-returnUrl="@Model.ReturnUrl">
+                <button type="submit" class="boton-enlace">Enviar un código nuevo</button>
+            </form>
+        }
+        <a asp-route-metodo="" asp-route-returnUrl="@Model.ReturnUrl">Elegir otro método</a>
+    </div>
+}
+
+@if (Model.Eligiendo)
+{
+    <form method="post" asp-page="./Logout" asp-route-returnUrl="/" class="enlaces-acceso">
+        <button type="submit" class="boton-enlace">Cerrar sesión</button>
+    </form>
+}
