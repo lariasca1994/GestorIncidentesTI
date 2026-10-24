@@ -59,6 +59,8 @@ de estado.
 - Avisos por correo al crear, resolver o cerrar incidentes y al crear proyectos
 - Dashboard con incidentes abiertos, % de cumplimiento de SLA y SLA incumplidos
 - Historial de auditoría por cada cambio de estado o nivel
+- Verificación en dos pasos obligatoria: app autenticadora o código por correo, a elección; el
+  otro método se agrega desde **Seguridad**
 
 ### Stack
 
@@ -140,6 +142,8 @@ Telegram se envían por separado: si uno falla, el otro sale igual.
 ### Seguridad y estado
 
 - Identity y acceso por proyecto protegen API, dashboard y administración.
+- Verificación en dos pasos obligatoria (TOTP o código por correo con Brevo), con bloqueo de 15
+  minutos tras 5 códigos errados y sin reutilizar códigos.
 - Antes de publicar, lee [SECURITY.md](SECURITY.md) y ejecuta `git status` para comprobar
   que no se incluyen configuraciones locales, secretos, datos de prueba, `.vs`, `bin` u `obj`.
 - Las pruebas E2E corren en [qa-evidencia](https://d4i3vsgw7xwmh.cloudfront.net) de lunes a
@@ -175,12 +179,16 @@ Telegram se envían por separado: si uno falla, el otro sale igual.
    | Password / Confirm Password | Contraseña y su confirmación |
 
 3. Pulsa **Register**. La cuenta queda con rol **Usuario** dentro del proyecto elegido.
+4. Elige tu verificación en dos pasos: **App autenticadora** (escanea el QR y escribe el primer
+   código) o **Código por correo**, y pulsa **Activar**.
 
 ### 5.2 Iniciar sesión
 
-1. Pulsa **Login**, escribe **Email** y **Password** y pulsa **Log in**.
-2. Si olvidaste la contraseña, usa **Forgot your password?**.
-3. El menú muestra **Dashboard**, **Incidentes** y, para administradores, **Proyectos**.
+1. Pulsa **Iniciar sesión**, escribe tu correo y contraseña y pulsa **Ingresar**.
+2. Escribe el código de 6 dígitos de tu app autenticadora (o el que llega por correo) y pulsa
+   **Verificar**. En **Seguridad** puedes agregar el otro método y elegir cuál se pide por defecto.
+3. Si olvidaste la contraseña, usa **¿Olvidaste tu contraseña?**.
+4. El menú muestra **Dashboard**, **Incidentes** y, para administradores, **Proyectos**.
 
 ### 5.3 Ver el dashboard
 

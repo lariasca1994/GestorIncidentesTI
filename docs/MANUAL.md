@@ -39,7 +39,7 @@ Es una demo de portafolio:
 
 - **La recuperación de contraseña no envía correos reales** (el envío de Identity está simulado):
   guarda tu contraseña en un gestor.
-- No hay bloqueo de cuenta por intentos fallidos ni segundo factor activo.
+- La verificación en dos pasos es obligatoria: ten a mano tu app autenticadora o tu correo.
 - No registres datos personales reales en los incidentes: las cuentas del mismo proyecto los ven.
 - Usa **Recordarme en este equipo** solo en dispositivos personales.
 
@@ -96,7 +96,7 @@ Qué servicio de nube, base de datos o API usa el proyecto y para qué sirve cad
 | 2 | Proyecto | El proyecto al que perteneces | Solo verás y gestionarás los incidentes de ese proyecto |
 | 3 | Contraseña | Tu contraseña | Mínimo 6 caracteres, con al menos una mayúscula, una minúscula y un número |
 | 4 | Confirmar contraseña | La misma contraseña | Debe coincidir con el campo 3 |
-| 5 | Crear cuenta | Botón | Crea la cuenta con rol **Usuario** |
+| 5 | Crear cuenta | Botón | Crea la cuenta con rol **Usuario** y te lleva a elegir tu verificación en dos pasos |
 
 El rol **Admin** no se puede pedir desde el formulario: las cuentas administradoras son fijas y se
 configuran en el servidor.
@@ -110,8 +110,23 @@ configuran en el servidor.
 | 1 | Correo | El correo de tu cuenta |
 | 2 | Contraseña | Tu contraseña |
 | 3 | Recordarme en este equipo | Márcalo solo en tu equipo personal: la sesión se mantiene al cerrar el navegador |
-| 4 | Ingresar | Entra a la aplicación |
+| 4 | Ingresar | Pide el código de tu verificación en dos pasos (ver 4.2.1); al escribirlo y pulsar **Verificar** entras |
 | 5 | ¿Olvidaste tu contraseña? | Inicia la recuperación (ver [Límites](#1-proyecto-objetivos-y-alcances)) |
+
+### 4.2.1 Verificación en dos pasos (obligatoria)
+
+Cada ingreso pide, además de la contraseña, un código. La primera vez que ingresas (o al crear la
+cuenta) eliges cómo recibirlo:
+
+| Método | Cómo funciona |
+|---|---|
+| **App autenticadora** (recomendado) | Escaneas el código QR con Google Authenticator, Microsoft Authenticator u otra app; desde ese momento la app muestra un código nuevo cada 30 segundos, incluso sin internet. Si no puedes escanear, escribe la clave que aparece bajo el QR. |
+| **Código por correo** | Cada vez que ingresas te llega un código de 6 dígitos que vence en 10 minutos y sirve una sola vez. Puedes pedir hasta 3 códigos cada 10 minutos. |
+
+Confirma el método escribiendo el primer código y pulsando **Activar**. En los siguientes ingresos
+escribe el código y pulsa **Verificar**; si tienes los dos métodos, la pantalla ofrece usar el otro.
+Desde **Seguridad** (menú superior) puedes **agregar el método que no elegiste** y escoger cuál se
+pide **por defecto**. La verificación no se puede desactivar.
 
 ### 4.3 Dashboard
 
@@ -199,6 +214,7 @@ Tu confianza es lo primero: la plataforma solo pide los datos necesarios para fu
 | Contraseña | Iniciar sesión | Azure SQL, **solo su huella** (PBKDF2 de ASP.NET Identity) | Nadie: no se puede leer ni recuperar |
 | Proyecto | Limitar lo que ves | Azure SQL | Tú y los administradores |
 | Incidentes, comentarios y nombre del solicitante | Gestionar la falla | Azure SQL | Las cuentas del mismo proyecto y los administradores |
+| Verificación en dos pasos | Confirmar que eres tú al ingresar | Azure SQL: clave de la app en el almacén de ASP.NET Identity y código del correo **solo como huella** | Nadie desde la aplicación |
 | Sesión | Mantenerte conectado | Cookie de tu navegador | Cifrada por el servidor e invisible para JavaScript |
 
 ### Cómo se protege tu información
@@ -207,6 +223,10 @@ Comprobado en el código del proyecto (`Program.cs`, `Controllers/IncidentesCont
 `Pages/`):
 
 - **ASP.NET Core Identity** para las cuentas: contraseñas con PBKDF2 y sal propia por usuario.
+- **Verificación en dos pasos obligatoria** (app autenticadora o código por correo): una sesión
+  abierta solo con la contraseña no entra a ninguna página; un código de la app no se acepta dos
+  veces; 5 códigos errados bloquean la cuenta 15 minutos; el código del correo vence en 10
+  minutos, admite 5 intentos y se guarda solo como huella.
 - **Cookie de sesión `HttpOnly`** protegida por el servidor; sin sesión, toda página interna
   redirige al inicio de sesión.
 - **Aislamiento por proyecto:** el dashboard, la lista, el detalle y la API filtran por el proyecto
