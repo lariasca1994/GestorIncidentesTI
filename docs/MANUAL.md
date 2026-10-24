@@ -238,6 +238,8 @@ Comprobado en el código del proyecto (`Program.cs`, `Controllers/IncidentesCont
 - **Historial de auditoría** de cada cambio de estado o nivel.
 - **Secretos fuera del repositorio:** la cadena de conexión, las cuentas Admin y la clave de Brevo
   viven en los secretos de la Container App.
+- **Al día en seguridad:** el runtime, el sistema y las dependencias se mantienen con los últimos
+  parches y se revisan periódicamente.
 
 ## 6. Agradecimientos
 
