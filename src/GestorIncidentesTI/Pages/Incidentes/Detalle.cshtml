@@ -40,7 +40,7 @@
         <span class="badge badge-@(inc.RespuestaIncumplida ? "vencido" : "ok")">@(inc.RespuestaIncumplida ? "Fuera de tiempo" : "A tiempo")</span>
     </p>
 }
-<p><strong>Límite SLA:</strong> @(inc.FechaLimiteSla?.ToLocalTime().ToString("g") ?? "Sin SLA") <small>(@CalendarioSla.Descripcion(inc.Prioridad))</small></p>
+<p><strong>Límite SLA:</strong> @(inc.FechaLimiteSla?.ToLocalTime().ToString("g") ?? "Sin SLA") <small>· @CalendarioSla.Descripcion(inc.Prioridad)</small></p>
 @if (inc.Estado == EstadoIncidente.EnEspera)
 {
     <p><em>En espera del solicitante: el SLA está detenido y la fecha límite se corre al reanudar.</em></p>
