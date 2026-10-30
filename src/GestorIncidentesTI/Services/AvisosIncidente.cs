@@ -10,6 +10,7 @@ public static class AvisosIncidente
     public static string Estado(EstadoIncidente estado) => estado switch
     {
         EstadoIncidente.EnProgreso => "En progreso",
+        EstadoIncidente.EnEspera => "En espera",
         _ => estado.ToString()
     };
 
@@ -22,8 +23,11 @@ public static class AvisosIncidente
     public static (string Asunto, Aviso Aviso) Creado(Incidente incidente, string? proyecto, string? actor, string? enlace)
     {
         var detalles = Base(incidente, proyecto);
+        if (incidente.FechaLimiteRespuesta is { } limiteRespuesta)
+            detalles.Add(("Límite de primera respuesta", HoraBogota(limiteRespuesta)));
         if (incidente.FechaLimiteSla is { } limite)
             detalles.Add(("Fecha límite SLA", HoraBogota(limite)));
+        detalles.Add(("Horario del SLA", CalendarioSla.Descripcion(incidente.Prioridad)));
         detalles.Add(("Creado por", actor ?? "—"));
         detalles.Add(("Fecha de creación", HoraBogota(incidente.FechaCreacion)));
 
@@ -47,7 +51,7 @@ public static class AvisosIncidente
         if (incidente.FechaLimiteSla is { } limite)
             detalles.Add(("Fecha límite SLA", HoraBogota(limite)));
         if (incidente.FechaResolucion is { } resolucion)
-            detalles.Add(($"Fecha de {(incidente.Estado == EstadoIncidente.Cerrado ? "cierre" : "resolución")}", HoraBogota(resolucion)));
+            detalles.Add(("Fecha de resolución", HoraBogota(resolucion)));
         detalles.Add(("Gestionado por", actor ?? "—"));
 
         var notas = new List<(string, string)>();
@@ -94,9 +98,11 @@ public static class AvisosIncidente
     {
         ("Proyecto", proyecto ?? "—"),
         ("Estado", Estado(incidente.Estado)),
-        ("Prioridad", Prioridad(incidente.Prioridad)),
+        ("Prioridad", incidente.Impacto is { } impacto && incidente.Urgencia is { } urgencia
+            ? $"{Prioridad(incidente.Prioridad)} (impacto {impacto.ToString().ToLowerInvariant()}, urgencia {urgencia.ToString().ToLowerInvariant()})"
+            : Prioridad(incidente.Prioridad)),
         ("Nivel de soporte", incidente.NivelActual.ToString()),
-        ("Categoría", incidente.Categoria),
+        ("Categoría", incidente.Subcategoria is null ? incidente.Categoria : $"{incidente.Categoria} › {incidente.Subcategoria}"),
         ("Solicitante", incidente.SolicitanteNombre)
     };
 
@@ -108,6 +114,7 @@ public static class AvisosIncidente
         EstadoIncidente.EnProgreso => new Chip("En progreso", "#a16207", "#fef9c3"),
         EstadoIncidente.Escalado => new Chip("Escalado", "#c2410c", "#ffedd5"),
         EstadoIncidente.Resuelto => new Chip("Resuelto", "#15803d", "#dcfce7"),
+        EstadoIncidente.EnEspera => new Chip("En espera", "#6d28d9", "#ede9fe"),
         _ => new Chip(Estado(estado), "#45635d", "#e6f4f1")
     };
 

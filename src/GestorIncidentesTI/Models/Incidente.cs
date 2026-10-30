@@ -7,7 +7,13 @@ public class Incidente
     public string Titulo { get; set; } = string.Empty;
     public string Descripcion { get; set; } = string.Empty;
     public string Categoria { get; set; } = string.Empty;
+    // Nullable: los incidentes anteriores al catálogo no tienen subcategoría.
+    public string? Subcategoria { get; set; }
 
+    // Impacto y urgencia definen la prioridad. Son nullable porque los
+    // incidentes anteriores a la matriz se crearon con la prioridad a mano.
+    public ImpactoIncidente? Impacto { get; set; }
+    public UrgenciaIncidente? Urgencia { get; set; }
     public PrioridadIncidente Prioridad { get; set; }
     public EstadoIncidente Estado { get; set; } = EstadoIncidente.Abierto;
     public NivelEscalamiento NivelActual { get; set; } = NivelEscalamiento.N1;
@@ -23,6 +29,16 @@ public class Incidente
 
     /// <summary>true si el incidente superó su fecha límite de SLA sin resolverse.</summary>
     public bool SlaIncumplido { get; set; }
+
+    /// <summary>Límite para la primera respuesta (cambio de estado o comentario del equipo).</summary>
+    public DateTime? FechaLimiteRespuesta { get; set; }
+    public DateTime? FechaPrimeraRespuesta { get; set; }
+    public bool RespuestaIncumplida { get; set; }
+
+    /// <summary>Desde cuándo está en espera del solicitante (SLA detenido).</summary>
+    public DateTime? InicioEspera { get; set; }
+    /// <summary>Horas de SLA acumuladas en espera; la fecha límite ya las incluye.</summary>
+    public double HorasEnEspera { get; set; }
 
     public int ProyectoId { get; set; }
     public Proyecto? Proyecto { get; set; }

@@ -13,13 +13,17 @@ public class SlaService : ISlaService
         _db = db;
     }
 
-    public async Task<DateTime> CalcularFechaLimiteAsync(PrioridadIncidente prioridad, DateTime fechaCreacion)
+    public async Task<DateTime> CalcularFechaLimiteAsync(PrioridadIncidente prioridad, DateTime fechaCreacion) =>
+        (await CalcularLimitesAsync(prioridad, fechaCreacion)).Resolucion;
+
+    public async Task<(DateTime Respuesta, DateTime Resolucion)> CalcularLimitesAsync(PrioridadIncidente prioridad, DateTime fechaCreacion)
     {
         var sla = await _db.SlaDefiniciones
             .FirstOrDefaultAsync(s => s.Prioridad == prioridad)
             ?? throw new InvalidOperationException($"No hay SLA definido para la prioridad {prioridad}.");
 
-        return fechaCreacion.AddHours(sla.HorasResolucion);
+        return (CalendarioSla.SumarHoras(fechaCreacion, sla.HorasRespuesta, prioridad),
+                CalendarioSla.SumarHoras(fechaCreacion, sla.HorasResolucion, prioridad));
     }
 
     public async Task<int> EvaluarEscalamientosAsync()
@@ -31,16 +35,23 @@ public class SlaService : ISlaService
         var slaPorPrioridad = await _db.SlaDefiniciones.ToDictionaryAsync(s => s.Prioridad);
 
         int escalados = 0;
+        bool hayCambios = false;
         var ahora = DateTime.UtcNow;
 
         foreach (var incidente in incidentesActivos)
         {
+            if (incidente.FechaPrimeraRespuesta is null && !incidente.RespuestaIncumplida
+                && incidente.FechaLimiteRespuesta is { } limiteRespuesta && ahora > limiteRespuesta)
+            {
+                incidente.RespuestaIncumplida = true;
+                hayCambios = true;
+            }
+
             if (incidente.FechaLimiteSla is null) continue;
             if (!slaPorPrioridad.TryGetValue(incidente.Prioridad, out var sla)) continue;
 
-            var tiempoTotal = (incidente.FechaLimiteSla.Value - incidente.FechaCreacion).TotalHours;
-            var tiempoTranscurrido = (ahora - incidente.FechaCreacion).TotalHours;
-            var proporcionTranscurrida = tiempoTranscurrido / tiempoTotal;
+            // En horas de SLA (hábiles salvo Crítica) y sin contar la espera.
+            var proporcionTranscurrida = CicloIncidente.FraccionSlaConsumida(incidente, ahora);
 
             var siguienteNivel = incidente.NivelActual switch
             {
@@ -51,7 +62,11 @@ public class SlaService : ISlaService
 
             bool yaVencio = ahora > incidente.FechaLimiteSla;
 
-            if (yaVencio) incidente.SlaIncumplido = true;
+            if (yaVencio && !incidente.SlaIncumplido)
+            {
+                incidente.SlaIncumplido = true;
+                hayCambios = true;
+            }
             if (siguienteNivel is null) continue;
 
             // N1 escala al umbral del SLA; N2 lo hace a mitad del tiempo
@@ -84,7 +99,7 @@ public class SlaService : ISlaService
             }
         }
 
-        if (escalados > 0) await _db.SaveChangesAsync();
+        if (escalados > 0 || hayCambios) await _db.SaveChangesAsync();
         return escalados;
     }
 

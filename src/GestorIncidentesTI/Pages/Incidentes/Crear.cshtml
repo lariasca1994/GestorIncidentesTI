@@ -1,5 +1,7 @@
 ﻿@page
 @model GestorIncidentesTI.Pages.Incidentes.CrearModel
+@using GestorIncidentesTI.Models
+@using GestorIncidentesTI.Services
 @{
     ViewData["Title"] = "Nuevo incidente";
 }
@@ -33,16 +35,59 @@
     </div>
 
     <div class="form-floating">
-        <input asp-for="Input.Categoria" class="form-control" />
+        <select asp-for="Input.Categoria" class="form-select" id="categoria">
+            <option value="">-- Selecciona una categoría --</option>
+            @foreach (var categoria in CatalogoCategorias.Todas.Keys)
+            {
+                <option value="@categoria">@categoria</option>
+            }
+        </select>
         <label asp-for="Input.Categoria">Categoría</label>
         <span asp-validation-for="Input.Categoria" class="text-danger"></span>
     </div>
 
     <div class="form-floating">
-        <select asp-for="Input.Prioridad" class="form-select" asp-items="Html.GetEnumSelectList<GestorIncidentesTI.Models.PrioridadIncidente>()"></select>
-        <label asp-for="Input.Prioridad">Prioridad</label>
-        <span asp-validation-for="Input.Prioridad" class="text-danger"></span>
+        <select asp-for="Input.Subcategoria" class="form-select" id="subcategoria">
+            <option value="">-- Selecciona una subcategoría --</option>
+            @if (CatalogoCategorias.Todas.TryGetValue(Model.Input.Categoria ?? "", out var subcategorias))
+            {
+                foreach (var subcategoria in subcategorias)
+                {
+                    <option value="@subcategoria">@subcategoria</option>
+                }
+            }
+        </select>
+        <label asp-for="Input.Subcategoria">Subcategoría</label>
+        <span asp-validation-for="Input.Subcategoria" class="text-danger"></span>
     </div>
+
+    <div class="form-floating">
+        <select asp-for="Input.Impacto" class="form-select" id="impacto">
+            <option value="">-- ¿A cuántos afecta? --</option>
+            @foreach (var impacto in Enum.GetValues<ImpactoIncidente>().Reverse())
+            {
+                <option value="@impacto">@MatrizPrioridad.Impacto(impacto)</option>
+            }
+        </select>
+        <label asp-for="Input.Impacto">Impacto</label>
+        <span asp-validation-for="Input.Impacto" class="text-danger"></span>
+    </div>
+
+    <div class="form-floating">
+        <select asp-for="Input.Urgencia" class="form-select" id="urgencia">
+            <option value="">-- ¿Qué tan rápido se necesita? --</option>
+            @foreach (var urgencia in Enum.GetValues<UrgenciaIncidente>().Reverse())
+            {
+                <option value="@urgencia">@MatrizPrioridad.Urgencia(urgencia)</option>
+            }
+        </select>
+        <label asp-for="Input.Urgencia">Urgencia</label>
+        <span asp-validation-for="Input.Urgencia" class="text-danger"></span>
+    </div>
+
+    <p class="prioridad-calculada">
+        Prioridad calculada: <span id="prioridad" class="badge">Elige impacto y urgencia</span>
+    </p>
 
     <div class="form-floating">
         <input asp-for="Input.SolicitanteNombre" class="form-control" />
@@ -55,4 +100,38 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script type="application/json" id="catalogo-categorias">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(CatalogoCategorias.Todas))</script>
+    <script>
+        (function () {
+            var catalogo = JSON.parse(document.getElementById("catalogo-categorias").textContent);
+            var categoria = document.getElementById("categoria");
+            var subcategoria = document.getElementById("subcategoria");
+            categoria.addEventListener("change", function () {
+                subcategoria.length = 1;
+                (catalogo[categoria.value] || []).forEach(function (nombre) {
+                    subcategoria.add(new Option(nombre, nombre));
+                });
+            });
+
+            // Misma matriz que MatrizPrioridad: impacto + urgencia (1 a 3 cada uno).
+            var niveles = { Bajo: 1, Medio: 2, Alto: 3, Baja: 1, Media: 2, Alta: 3 };
+            var prioridades = { 6: ["Crítica", "critica"], 5: ["Alta", "alta"], 4: ["Media", "media"] };
+            var impacto = document.getElementById("impacto");
+            var urgencia = document.getElementById("urgencia");
+            var etiqueta = document.getElementById("prioridad");
+            function actualizar() {
+                if (!impacto.value || !urgencia.value) {
+                    etiqueta.textContent = "Elige impacto y urgencia";
+                    etiqueta.className = "badge";
+                    return;
+                }
+                var p = prioridades[niveles[impacto.value] + niveles[urgencia.value]] || ["Baja", "baja"];
+                etiqueta.textContent = p[0];
+                etiqueta.className = "badge badge-" + p[1];
+            }
+            impacto.addEventListener("change", actualizar);
+            urgencia.addEventListener("change", actualizar);
+            actualizar();
+        })();
+    </script>
 }

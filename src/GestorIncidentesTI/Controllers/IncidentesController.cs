@@ -63,18 +63,33 @@ public class IncidentesController : ControllerBase
         if (!await _db.Proyectos.AnyAsync(p => p.Id == proyectoId.Value))
             return ValidationProblem("El proyecto indicado no existe.");
 
+        if (!CatalogoCategorias.EsValida(dto.Categoria, dto.Subcategoria))
+            return ValidationProblem("Categoría o subcategoría fuera del catálogo.");
+
+        PrioridadIncidente prioridad;
+        if (dto.Impacto is not null && dto.Urgencia is not null)
+            prioridad = MatrizPrioridad.Calcular(dto.Impacto.Value, dto.Urgencia.Value);
+        else if (dto.Prioridad is not null)
+            prioridad = dto.Prioridad.Value;
+        else
+            return ValidationProblem("Indica impacto y urgencia (o la prioridad).");
+
         var ahora = DateTime.UtcNow;
-        var fechaLimite = await _slaService.CalcularFechaLimiteAsync(dto.Prioridad, ahora);
+        var (limiteRespuesta, limiteResolucion) = await _slaService.CalcularLimitesAsync(prioridad, ahora);
 
         var incidente = new Incidente
         {
             Titulo = dto.Titulo,
             Descripcion = dto.Descripcion,
             Categoria = dto.Categoria,
-            Prioridad = dto.Prioridad,
+            Subcategoria = dto.Subcategoria,
+            Impacto = dto.Impacto,
+            Urgencia = dto.Urgencia,
+            Prioridad = prioridad,
             SolicitanteNombre = dto.SolicitanteNombre,
             FechaCreacion = ahora,
-            FechaLimiteSla = fechaLimite,
+            FechaLimiteRespuesta = limiteRespuesta,
+            FechaLimiteSla = limiteResolucion,
             Estado = EstadoIncidente.Abierto,
             NivelActual = NivelEscalamiento.N1,
             ProyectoId = proyectoId.Value,
@@ -111,18 +126,11 @@ public class IncidentesController : ControllerBase
 
         var incidente = await query.FirstOrDefaultAsync(i => i.Id == id);
         if (incidente is null) return NotFound();
-        if (!EsTransicionValida(incidente.Estado, dto.NuevoEstado))
+        if (!CicloIncidente.EsTransicionValida(incidente.Estado, dto.NuevoEstado))
             return ValidationProblem($"No se permite cambiar de {incidente.Estado} a {dto.NuevoEstado}.");
 
         var estadoAnterior = incidente.Estado;
-        incidente.Estado = dto.NuevoEstado;
-
-        if (dto.NuevoEstado is EstadoIncidente.Resuelto or EstadoIncidente.Cerrado)
-        {
-            incidente.FechaResolucion = DateTime.UtcNow;
-            if (incidente.FechaLimiteSla is not null)
-                incidente.SlaIncumplido = incidente.FechaResolucion > incidente.FechaLimiteSla;
-        }
+        CicloIncidente.CambiarEstado(incidente, dto.NuevoEstado, DateTime.UtcNow);
 
         _db.HistorialEstados.Add(new HistorialEstado
         {
@@ -192,14 +200,4 @@ public class IncidentesController : ControllerBase
         return await _db.Users.Where(u => u.Id == userId)
             .Select(u => u.ProyectoId).SingleOrDefaultAsync();
     }
-
-    private static bool EsTransicionValida(EstadoIncidente actual, EstadoIncidente nuevo) =>
-        (actual, nuevo) switch
-        {
-            (EstadoIncidente.Abierto, EstadoIncidente.EnProgreso or EstadoIncidente.Escalado or EstadoIncidente.Resuelto) => true,
-            (EstadoIncidente.EnProgreso, EstadoIncidente.Escalado or EstadoIncidente.Resuelto) => true,
-            (EstadoIncidente.Escalado, EstadoIncidente.EnProgreso or EstadoIncidente.Resuelto) => true,
-            (EstadoIncidente.Resuelto, EstadoIncidente.Cerrado or EstadoIncidente.EnProgreso) => true,
-            _ => false
-        };
 }

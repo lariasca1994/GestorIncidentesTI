@@ -1,4 +1,4 @@
-@page "/dashboard"
+﻿@page "/dashboard"
 @model GestorIncidentesTI.Pages.DashboardModel
 @{
     ViewData["Title"] = "Dashboard";
@@ -36,8 +36,8 @@
         {
             <tr class="fila-@incidente.NivelRiesgo">
                 <td>@incidente.Titulo</td>
-                <td><span class="badge badge-@incidente.Prioridad.ToString().ToLowerInvariant()">@incidente.Prioridad</span></td>
-                <td><span class="badge badge-@incidente.Estado.ToString().ToLowerInvariant()">@incidente.Estado</span></td>
+                <td><span class="badge badge-@incidente.Prioridad.ToString().ToLowerInvariant()">@GestorIncidentesTI.Services.AvisosIncidente.Prioridad(incidente.Prioridad)</span></td>
+                <td><span class="badge badge-@incidente.Estado.ToString().ToLowerInvariant()">@GestorIncidentesTI.Services.AvisosIncidente.Estado(incidente.Estado)</span></td>
                 <td>@incidente.NivelActual</td>
                 <td><span class="badge badge-@incidente.NivelRiesgo">@incidente.TiempoSlaTexto</span></td>
             </tr>

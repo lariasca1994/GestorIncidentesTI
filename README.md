@@ -53,8 +53,11 @@ de estado.
 
 ### Funcionalidades
 
-- Registro de incidentes con categoría, prioridad y solicitante
-- Cálculo automático de fecha límite según SLA definido por prioridad
+- Registro de incidentes con categoría y subcategoría de un catálogo fijo y prioridad calculada
+  con la matriz ITIL impacto × urgencia
+- SLA de primera respuesta y de resolución, en horario hábil con festivos de Colombia
+  (la prioridad Crítica corre 24×7)
+- Estado **En espera** del solicitante que detiene el reloj del SLA
 - Escalamiento automático cuando se supera el umbral de tiempo de SLA (se evalúa al entrar al aplicativo)
 - Avisos por correo al crear, resolver o cerrar incidentes y al crear proyectos
 - Dashboard con incidentes abiertos, % de cumplimiento de SLA y SLA incumplidos
@@ -67,7 +70,7 @@ de estado.
 | Capa | Tecnología |
 |---|---|
 | Backend | ASP.NET Core 10 (Web API + Razor Pages) |
-| ORM | Entity Framework Core 8 |
+| ORM | Entity Framework Core 10 |
 | Base de datos | SQL Server / Azure SQL |
 | Escalamiento | Middleware bajo demanda (sin procesos en segundo plano que mantengan la base despierta) |
 | Correo | API transaccional de Brevo |
@@ -207,11 +210,23 @@ SLA y los vencidos, con su **Título**, **Prioridad**, **Estado**, **Nivel** y *
    | Proyecto | Proyecto afectado |
    | Título | Resumen de la falla |
    | Descripción | Qué pasó y cómo se manifiesta |
-   | Categoría | Tipo de falla |
-   | Prioridad | Baja, Media, Alta o Crítica |
+   | Categoría y Subcategoría | Tipo de falla, de una lista fija (Hardware › Impresora, Red y conectividad › VPN…) |
+   | Impacto | A cuántos afecta: una persona, varias o toda el área |
+   | Urgencia | Qué tan rápido se necesita: puede esperar, hay alternativa o el trabajo está detenido |
    | Solicitante | Quién reporta la falla |
 
-3. Pulsa **Crear incidente**. El sistema calcula la fecha límite según la prioridad:
+   La **prioridad** no se elige: la calcula la matriz impacto × urgencia y se muestra al
+   llenar el formulario.
+
+   | Impacto ↓ · Urgencia → | Alta | Media | Baja |
+   |---|---|---|---|
+   | Alto | Crítica | Alta | Media |
+   | Medio | Alta | Media | Baja |
+   | Bajo | Media | Baja | Baja |
+
+3. Pulsa **Crear incidente**. El sistema calcula los plazos de primera respuesta y de
+   resolución según la prioridad. La Crítica corre 24×7; las demás solo en horario hábil
+   (lunes a viernes de 8:00 a 18:00 hora Bogotá, sin festivos de Colombia):
 
    | Prioridad | Respuesta | Resolución | Escala al consumir |
    |---|---|---|---|
@@ -223,9 +238,12 @@ SLA y los vencidos, con su **Título**, **Prioridad**, **Estado**, **Nivel** y *
 ### 5.5 Dar seguimiento a un incidente
 
 1. En la lista de **Incidentes**, pulsa **Ver**.
-2. En **Cambiar estado**, elige el **Nuevo estado** (Abierto, En progreso, Escalado,
+2. En **Cambiar estado**, elige el **Nuevo estado** (En progreso, En espera, Escalado,
    Resuelto o Cerrado), escribe un comentario si quieres y pulsa **Actualizar estado**.
-3. En **Agregar comentario**, escribe y pulsa **Comentar**.
+   **En espera** es para cuando falta información del solicitante: el SLA se detiene y, al
+   volver a **En progreso**, la fecha límite se corre lo que duró la espera.
+3. En **Agregar comentario**, escribe y pulsa **Comentar**. El primer cambio de estado, o el
+   primer comentario de alguien distinto a quien lo reportó, cuenta como primera respuesta.
 4. El **Historial** muestra cada cambio con su fecha y comentario, incluidos los
    escalamientos automáticos N1 → N2 → N3.
 
@@ -270,16 +288,13 @@ pruebas automáticas (qa-evidencia).
 ### Despliegue en Azure
 
 La aplicación corre en **Azure Container Apps**, con la imagen publicada en GitHub Container
-Registry, y la base de datos en Azure SQL Database. La base de datos existente
-no se recrea al iniciar la aplicación: las migraciones se aplican como un paso controlado antes
-de publicar cada nueva versión. La migración `20260917000000_AgregarAuditoriaDeUsuarios` solo
-agrega campos opcionales de auditoría y preserva los datos actuales.
+Registry, y la base de datos en Azure SQL Database. La base existente no se recrea al iniciar.
 
-1. Genera un script idempotente de migraciones y revísalo con el responsable de la base:
-```bash
-   dotnet ef migrations script --idempotent --output artifacts/migrations.sql
-```
-2. Aplica el script a Azure SQL usando una identidad de despliegue con permisos de esquema.
+1. Las migraciones se aplican solas en la primera visita después de un despliegue (al abrir el
+   inicio de sesión o navegar con sesión), la misma que ya despierta la base: no hay pasos
+   manuales ni un despertar extra. Solo agregan columnas o tablas y preservan los datos.
+2. En esa misma visita se depura lo que no sirve: los incidentes de la prueba automática de QA
+   se conservan 15 días y luego se borran con su historial, para que la base no crezca.
 3. Cada push a `main` dispara `.github/workflows/ghcr-publish.yml`: construye la imagen, la
    publica en GitHub Container Registry con la etiqueta del commit y actualiza la Container App.
    No hace falta redesplegar a mano. La autenticación con Azure usa OpenID Connect, sin

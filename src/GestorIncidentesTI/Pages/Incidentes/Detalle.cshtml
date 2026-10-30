@@ -1,7 +1,10 @@
 ﻿@page "{id:int}"
 @model GestorIncidentesTI.Pages.Incidentes.DetalleModel
+@using GestorIncidentesTI.Models
+@using GestorIncidentesTI.Services
 @{
     ViewData["Title"] = Model.Incidente.Titulo;
+    var inc = Model.Incidente;
 }
 
 <p><a asp-page="./Index">&larr; Volver a incidentes</a></p>
@@ -9,16 +12,39 @@
 <h1>@Model.Incidente.Titulo</h1>
 
 <p>
-    <span class="badge badge-@Model.Incidente.Prioridad.ToString().ToLowerInvariant()">@Model.Incidente.Prioridad</span>
-    <span class="badge badge-@Model.Incidente.Estado.ToString().ToLowerInvariant()">@Model.Incidente.Estado</span>
+    <span class="badge badge-@inc.Prioridad.ToString().ToLowerInvariant()">@AvisosIncidente.Prioridad(inc.Prioridad)</span>
+    <span class="badge badge-@inc.Estado.ToString().ToLowerInvariant()">@AvisosIncidente.Estado(inc.Estado)</span>
 </p>
 
-<p><strong>Proyecto:</strong> @Model.Incidente.Proyecto?.Nombre</p>
-<p><strong>Categoría:</strong> @Model.Incidente.Categoria</p>
-<p><strong>Solicitante:</strong> @Model.Incidente.SolicitanteNombre</p>
-<p><strong>Descripción:</strong> @Model.Incidente.Descripcion</p>
-<p><strong>Creado:</strong> @Model.Incidente.FechaCreacion.ToLocalTime().ToString("g")</p>
-<p><strong>Límite SLA:</strong> @(Model.Incidente.FechaLimiteSla?.ToLocalTime().ToString("g") ?? "Sin SLA")</p>
+<p><strong>Proyecto:</strong> @inc.Proyecto?.Nombre</p>
+<p><strong>Categoría:</strong> @inc.Categoria@(inc.Subcategoria is null ? "" : $" › {inc.Subcategoria}")</p>
+@if (inc.Impacto is not null && inc.Urgencia is not null)
+{
+    <p><strong>Impacto:</strong> @MatrizPrioridad.Impacto(inc.Impacto.Value) · <strong>Urgencia:</strong> @MatrizPrioridad.Urgencia(inc.Urgencia.Value)</p>
+}
+<p><strong>Solicitante:</strong> @inc.SolicitanteNombre</p>
+<p><strong>Descripción:</strong> @inc.Descripcion</p>
+<p><strong>Creado:</strong> @inc.FechaCreacion.ToLocalTime().ToString("g")</p>
+@if (inc.FechaLimiteRespuesta is not null)
+{
+    <p>
+        <strong>Primera respuesta:</strong>
+        @if (inc.FechaPrimeraRespuesta is not null)
+        {
+            @inc.FechaPrimeraRespuesta.Value.ToLocalTime().ToString("g")
+        }
+        else
+        {
+            <span>pendiente, límite @inc.FechaLimiteRespuesta.Value.ToLocalTime().ToString("g")</span>
+        }
+        <span class="badge badge-@(inc.RespuestaIncumplida ? "vencido" : "ok")">@(inc.RespuestaIncumplida ? "Fuera de tiempo" : "A tiempo")</span>
+    </p>
+}
+<p><strong>Límite SLA:</strong> @(inc.FechaLimiteSla?.ToLocalTime().ToString("g") ?? "Sin SLA") <small>(@CalendarioSla.Descripcion(inc.Prioridad))</small></p>
+@if (inc.Estado == EstadoIncidente.EnEspera)
+{
+    <p><em>En espera del solicitante: el SLA está detenido y la fecha límite se corre al reanudar.</em></p>
+}
 
 <div asp-validation-summary="All" class="text-danger"></div>
 
@@ -32,7 +58,7 @@
                 <option value="">-- Selecciona el nuevo estado --</option>
                 @foreach (var estado in Model.EstadosDisponibles)
                 {
-                    <option value="@estado">@estado</option>
+                    <option value="@estado">@AvisosIncidente.Estado(estado)</option>
                 }
             </select>
             <label asp-for="NuevoEstado">Nuevo estado</label>
@@ -80,7 +106,7 @@ else
                     }
                     else
                     {
-                        <span>@h.EstadoAnterior &rarr; @h.EstadoNuevo</span>
+                        <span>@AvisosIncidente.Estado(h.EstadoAnterior) &rarr; @AvisosIncidente.Estado(h.EstadoNuevo)</span>
                     }
                 </td>
                 <td>@h.Comentario</td>

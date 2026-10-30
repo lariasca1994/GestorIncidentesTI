@@ -36,6 +36,21 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .Property(i => i.NivelActual)
             .HasConversion<string>();
 
+        // Columnas nuevas con largo acotado: no reservan nvarchar(max).
+        modelBuilder.Entity<Incidente>()
+            .Property(i => i.Impacto)
+            .HasConversion<string>()
+            .HasMaxLength(10);
+
+        modelBuilder.Entity<Incidente>()
+            .Property(i => i.Urgencia)
+            .HasConversion<string>()
+            .HasMaxLength(10);
+
+        modelBuilder.Entity<Incidente>()
+            .Property(i => i.Subcategoria)
+            .HasMaxLength(60);
+
         modelBuilder.Entity<Proyecto>()
             .HasMany(p => p.Incidentes)
             .WithOne(i => i.Proyecto)

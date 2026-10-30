@@ -38,8 +38,8 @@
                 {
                     <td>@incidente.Proyecto?.Nombre</td>
                 }
-                <td><span class="badge badge-@incidente.Prioridad.ToString().ToLowerInvariant()">@incidente.Prioridad</span></td>
-                <td><span class="badge badge-@incidente.Estado.ToString().ToLowerInvariant()">@incidente.Estado</span></td>
+                <td><span class="badge badge-@incidente.Prioridad.ToString().ToLowerInvariant()">@GestorIncidentesTI.Services.AvisosIncidente.Prioridad(incidente.Prioridad)</span></td>
+                <td><span class="badge badge-@incidente.Estado.ToString().ToLowerInvariant()">@GestorIncidentesTI.Services.AvisosIncidente.Estado(incidente.Estado)</span></td>
                 <td>@incidente.NivelActual</td>
                 <td>@incidente.FechaLimiteSla?.ToLocalTime().ToString("g")</td>
                 <td><a asp-page="./Detalle" asp-route-id="@incidente.Id">Ver</a></td>

@@ -67,6 +67,11 @@ public class DashboardModel : PageModel
                 nivelRiesgo = "ok";
                 tiempoTexto = "Sin SLA";
             }
+            else if (i.Estado == EstadoIncidente.EnEspera)
+            {
+                nivelRiesgo = "ok";
+                tiempoTexto = "SLA detenido (en espera)";
+            }
             else if (ahora > i.FechaLimiteSla.Value)
             {
                 nivelRiesgo = "vencido";
@@ -74,9 +79,8 @@ public class DashboardModel : PageModel
             }
             else
             {
-                var totalVentana = (i.FechaLimiteSla.Value - i.FechaCreacion).TotalHours;
-                var transcurrido = (ahora - i.FechaCreacion).TotalHours;
-                var fraccion = totalVentana > 0 ? transcurrido / totalVentana : 1;
+                // En horas de SLA: hábiles salvo Crítica, sin contar la espera.
+                var fraccion = CicloIncidente.FraccionSlaConsumida(i, ahora);
                 var umbral = umbrales.TryGetValue(i.Prioridad, out var u) ? u : 0.8;
 
                 nivelRiesgo = fraccion >= umbral ? "riesgo" : "ok";

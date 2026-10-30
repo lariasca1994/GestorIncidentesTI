@@ -159,12 +159,23 @@ tiempo restante o vencido de su **SLA**.
 | 1 | Proyecto | Proyecto afectado (solo el Admin elige; un Usuario reporta en su propio proyecto) |
 | 2 | Título | Resumen corto de la falla |
 | 3 | Descripción | Qué pasó, desde cuándo y cómo se manifiesta |
-| 4 | Categoría | Tipo de falla: Red, Aplicaciones, Infraestructura… |
-| 5 | Prioridad | Baja, Media, Alta o Crítica; define el plazo del SLA |
-| 6 | Solicitante | Quién reporta la falla |
-| 7 | Crear incidente | Guarda el incidente y calcula su fecha límite |
+| 4 | Categoría | Tipo de falla, de una lista fija: Hardware, Software, Red y conectividad… |
+| 5 | Subcategoría | Detalle de la categoría: Impresora, VPN, Servidores… |
+| 6 | Impacto | A cuántos afecta: una persona, varias o toda el área |
+| 7 | Urgencia | Qué tan rápido se necesita: puede esperar, hay alternativa o el trabajo está detenido |
+| 8 | Solicitante | Quién reporta la falla |
+| 9 | Crear incidente | Guarda el incidente y calcula sus plazos |
 
-Plazos por prioridad:
+La **prioridad** la calcula la matriz impacto × urgencia y se ve al llenar el formulario:
+
+| Impacto ↓ · Urgencia → | Alta | Media | Baja |
+|---|---|---|---|
+| Alto | Crítica | Alta | Media |
+| Medio | Alta | Media | Baja |
+| Bajo | Media | Baja | Baja |
+
+Plazos por prioridad (la Crítica corre 24×7; las demás en horario hábil, lunes a viernes de
+8:00 a 18:00 hora Bogotá, sin festivos de Colombia):
 
 | Prioridad | Respuesta | Resolución | Escala al consumir |
 |---|---|---|---|
@@ -179,7 +190,7 @@ Plazos por prioridad:
 
 | # | Campo | Qué escribir |
 |:-:|---|---|
-| 1 | Nuevo estado | Abierto, En progreso, Escalado, Resuelto o Cerrado; pulsa **Actualizar estado** |
+| 1 | Nuevo estado | En progreso, En espera, Escalado, Resuelto o Cerrado; pulsa **Actualizar estado**. **En espera** detiene el SLA mientras falta información del solicitante |
 | 2 | Comentario (opcional) | Qué se hizo o por qué cambia el estado |
 
 En **Agregar comentario** dejas notas sin cambiar el estado. El **Historial** registra cada cambio

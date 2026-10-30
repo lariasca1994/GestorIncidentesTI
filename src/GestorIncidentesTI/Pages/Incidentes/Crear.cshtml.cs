@@ -41,11 +41,17 @@ public class CrearModel : PageModel
         [Required, StringLength(4000)]
         public string Descripcion { get; set; } = string.Empty;
 
-        [Required, StringLength(100)]
+        [Required(ErrorMessage = "Selecciona una categoría."), StringLength(100)]
         public string Categoria { get; set; } = string.Empty;
 
-        [Required]
-        public PrioridadIncidente Prioridad { get; set; }
+        [Required(ErrorMessage = "Selecciona una subcategoría."), StringLength(60)]
+        public string Subcategoria { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Indica el impacto.")]
+        public ImpactoIncidente? Impacto { get; set; }
+
+        [Required(ErrorMessage = "Indica la urgencia.")]
+        public UrgenciaIncidente? Urgencia { get; set; }
 
         [Required, StringLength(160)]
         public string SolicitanteNombre { get; set; } = string.Empty;
@@ -70,6 +76,9 @@ public class CrearModel : PageModel
         {
             ProyectosDisponibles = new SelectList(await _db.Proyectos.OrderBy(p => p.Nombre).ToListAsync(), "Id", "Nombre");
         }
+
+        if (ModelState.IsValid && !CatalogoCategorias.EsValida(Input.Categoria, Input.Subcategoria))
+            ModelState.AddModelError(nameof(Input.Subcategoria), "La subcategoría no corresponde a la categoría.");
 
         if (!ModelState.IsValid) return Page();
 
@@ -96,17 +105,22 @@ public class CrearModel : PageModel
         }
 
         var ahora = DateTime.UtcNow;
-        var fechaLimite = await _slaService.CalcularFechaLimiteAsync(Input.Prioridad, ahora);
+        var prioridad = MatrizPrioridad.Calcular(Input.Impacto!.Value, Input.Urgencia!.Value);
+        var (limiteRespuesta, limiteResolucion) = await _slaService.CalcularLimitesAsync(prioridad, ahora);
 
         var incidente = new Incidente
         {
             Titulo = Input.Titulo,
             Descripcion = Input.Descripcion,
             Categoria = Input.Categoria,
-            Prioridad = Input.Prioridad,
+            Subcategoria = Input.Subcategoria,
+            Impacto = Input.Impacto,
+            Urgencia = Input.Urgencia,
+            Prioridad = prioridad,
             SolicitanteNombre = Input.SolicitanteNombre,
             FechaCreacion = ahora,
-            FechaLimiteSla = fechaLimite,
+            FechaLimiteRespuesta = limiteRespuesta,
+            FechaLimiteSla = limiteResolucion,
             Estado = EstadoIncidente.Abierto,
             NivelActual = NivelEscalamiento.N1,
             ProyectoId = proyectoIdFinal,

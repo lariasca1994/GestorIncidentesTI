@@ -17,12 +17,12 @@ namespace GestorIncidentesTI.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("GestorIncidentesTI.Models.ApplicationUser", b =>
+            modelBuilder.Entity("GestorIncidentesTI.Data.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -103,9 +103,6 @@ namespace GestorIncidentesTI.Migrations
                     b.Property<string>("Comentario")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ModificadoPorUserId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("EstadoAnterior")
                         .HasColumnType("int");
 
@@ -117,6 +114,9 @@ namespace GestorIncidentesTI.Migrations
 
                     b.Property<int>("IncidenteId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ModificadoPorUserId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("NivelAnterior")
                         .HasColumnType("int");
@@ -160,10 +160,26 @@ namespace GestorIncidentesTI.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("FechaLimiteRespuesta")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("FechaLimiteSla")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("FechaPrimeraRespuesta")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("FechaResolucion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("HorasEnEspera")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Impacto")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime?>("InicioEspera")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("NivelActual")
@@ -177,6 +193,9 @@ namespace GestorIncidentesTI.Migrations
                     b.Property<int>("ProyectoId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("RespuestaIncumplida")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("SlaIncumplido")
                         .HasColumnType("bit");
 
@@ -184,9 +203,17 @@ namespace GestorIncidentesTI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Subcategoria")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Urgencia")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.HasKey("Id");
 
@@ -413,7 +440,7 @@ namespace GestorIncidentesTI.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("GestorIncidentesTI.Models.ApplicationUser", b =>
+            modelBuilder.Entity("GestorIncidentesTI.Data.ApplicationUser", b =>
                 {
                     b.HasOne("GestorIncidentesTI.Models.Proyecto", "Proyecto")
                         .WithMany()
@@ -455,7 +482,7 @@ namespace GestorIncidentesTI.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("GestorIncidentesTI.Models.ApplicationUser", null)
+                    b.HasOne("GestorIncidentesTI.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -464,7 +491,7 @@ namespace GestorIncidentesTI.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("GestorIncidentesTI.Models.ApplicationUser", null)
+                    b.HasOne("GestorIncidentesTI.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -479,7 +506,7 @@ namespace GestorIncidentesTI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GestorIncidentesTI.Models.ApplicationUser", null)
+                    b.HasOne("GestorIncidentesTI.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -488,7 +515,7 @@ namespace GestorIncidentesTI.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("GestorIncidentesTI.Models.ApplicationUser", null)
+                    b.HasOne("GestorIncidentesTI.Data.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)

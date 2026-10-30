@@ -7,6 +7,9 @@ public interface ISlaService
     /// <summary>Calcula la fecha límite de SLA para un incidente recién creado.</summary>
     Task<DateTime> CalcularFechaLimiteAsync(PrioridadIncidente prioridad, DateTime fechaCreacion);
 
+    /// <summary>Calcula los límites de primera respuesta y de resolución.</summary>
+    Task<(DateTime Respuesta, DateTime Resolucion)> CalcularLimitesAsync(PrioridadIncidente prioridad, DateTime fechaCreacion);
+
     /// <summary>
     /// Revisa todos los incidentes abiertos/en progreso y escala los que ya
     /// superaron el umbral de tiempo definido en su SLA. Pensado para correr

@@ -21,15 +21,6 @@ public class DetalleModel : PageModel
         _notificador = notificador;
     }
 
-    private static readonly Dictionary<EstadoIncidente, EstadoIncidente[]> Transiciones = new()
-    {
-        [EstadoIncidente.Abierto] = new[] { EstadoIncidente.EnProgreso, EstadoIncidente.Escalado, EstadoIncidente.Resuelto },
-        [EstadoIncidente.EnProgreso] = new[] { EstadoIncidente.Escalado, EstadoIncidente.Resuelto },
-        [EstadoIncidente.Escalado] = new[] { EstadoIncidente.EnProgreso, EstadoIncidente.Resuelto },
-        [EstadoIncidente.Resuelto] = new[] { EstadoIncidente.Cerrado, EstadoIncidente.EnProgreso },
-        [EstadoIncidente.Cerrado] = Array.Empty<EstadoIncidente>()
-    };
-
     public Incidente Incidente { get; set; } = null!;
     public List<EstadoIncidente> EstadosDisponibles { get; set; } = new();
 
@@ -45,7 +36,7 @@ public class DetalleModel : PageModel
         if (incidente is null) return NotFound();
 
         Incidente = incidente;
-        EstadosDisponibles = Transiciones.TryGetValue(incidente.Estado, out var opciones) ? opciones.ToList() : new();
+        EstadosDisponibles = CicloIncidente.Siguientes(incidente.Estado).ToList();
         return Page();
     }
 
@@ -56,6 +47,12 @@ public class DetalleModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(NuevoComentario))
         {
+            // El comentario de alguien distinto a quien lo reportó es la
+            // primera respuesta del equipo.
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId != incidente.CreadoPorUserId)
+                CicloIncidente.RegistrarPrimeraRespuesta(incidente, DateTime.UtcNow);
+
             _db.HistorialEstados.Add(new HistorialEstado
             {
                 IncidenteId = incidente.Id,
@@ -77,25 +74,16 @@ public class DetalleModel : PageModel
         var incidente = await CargarConAlcanceAsync(id);
         if (incidente is null) return NotFound();
 
-        if (NuevoEstado is null ||
-            !Transiciones.TryGetValue(incidente.Estado, out var opciones) ||
-            !opciones.Contains(NuevoEstado.Value))
+        if (NuevoEstado is null || !CicloIncidente.EsTransicionValida(incidente.Estado, NuevoEstado.Value))
         {
             ModelState.AddModelError(string.Empty, "Esa transición de estado no está permitida.");
             Incidente = incidente;
-            EstadosDisponibles = Transiciones.TryGetValue(incidente.Estado, out var op2) ? op2.ToList() : new();
+            EstadosDisponibles = CicloIncidente.Siguientes(incidente.Estado).ToList();
             return Page();
         }
 
         var estadoAnterior = incidente.Estado;
-        incidente.Estado = NuevoEstado.Value;
-
-        if (incidente.Estado is EstadoIncidente.Resuelto or EstadoIncidente.Cerrado)
-        {
-            incidente.FechaResolucion = DateTime.UtcNow;
-            if (incidente.FechaLimiteSla is not null)
-                incidente.SlaIncumplido = incidente.FechaResolucion > incidente.FechaLimiteSla;
-        }
+        CicloIncidente.CambiarEstado(incidente, NuevoEstado.Value, DateTime.UtcNow);
 
         _db.HistorialEstados.Add(new HistorialEstado
         {
