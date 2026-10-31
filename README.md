@@ -268,7 +268,7 @@ pruebas automáticas (qa-evidencia).
 
 ## 6. Instalación para pruebas
 
-1. Instala el [.NET 10 SDK](https://dotnet.microsoft.com/download) (10.0.402 o posterior) y SQL Server (o usa el
+1. Instala el [.NET 10 SDK](https://dotnet.microsoft.com/download) (10.0.403 o posterior) y SQL Server (o usa el
    contenedor: `docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=TuPasswordAqui" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest`).
 2. Copia `appsettings.Development.json.example` a `appsettings.Development.json` y pon tu
    connection string real ahí (ese archivo está en `.gitignore`, nunca se sube).
