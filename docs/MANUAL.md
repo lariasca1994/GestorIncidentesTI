@@ -222,7 +222,7 @@ Tu confianza es lo primero: la plataforma solo pide los datos necesarios para fu
 | Dato | Para qué se usa | Dónde se guarda | Quién lo ve |
 |---|---|---|---|
 | Correo | Identificar tu cuenta y avisarte | Azure SQL | Tú y los administradores |
-| Contraseña | Iniciar sesión | Azure SQL, **solo su huella** (PBKDF2 de ASP.NET Identity) | Nadie: no se puede leer ni recuperar |
+| Contraseña | Iniciar sesión | Azure SQL, **solo su huella** | Nadie: no se puede leer ni recuperar |
 | Proyecto | Limitar lo que ves | Azure SQL | Tú y los administradores |
 | Incidentes, comentarios y nombre del solicitante | Gestionar la falla | Azure SQL | Las cuentas del mismo proyecto y los administradores |
 | Verificación en dos pasos | Confirmar que eres tú al ingresar | Azure SQL: clave de la app en el almacén de ASP.NET Identity y código del correo **solo como huella** | Nadie desde la aplicación |
@@ -233,11 +233,11 @@ Tu confianza es lo primero: la plataforma solo pide los datos necesarios para fu
 Comprobado en el código del proyecto (`Program.cs`, `Controllers/IncidentesController.cs`,
 `Pages/`):
 
-- **ASP.NET Core Identity** para las cuentas: contraseñas con PBKDF2 y sal propia por usuario.
+- **ASP.NET Core Identity** para las cuentas: contraseñas guardadas solo como huella con sal.
 - **Verificación en dos pasos obligatoria** (app autenticadora o código por correo): una sesión
   abierta solo con la contraseña no entra a ninguna página; un código de la app no se acepta dos
-  veces; 5 códigos errados bloquean la cuenta 15 minutos; el código del correo vence en 10
-  minutos, admite 5 intentos y se guarda solo como huella.
+  veces; los intentos errados bloquean la cuenta un tiempo; el código del correo vence en
+  pocos minutos y se guarda solo como huella.
 - **Cookie de sesión segura** protegida por el servidor; sin sesión, toda página interna
   redirige al inicio de sesión.
 - **Aislamiento por proyecto:** el dashboard, la lista, el detalle y la API filtran por el proyecto

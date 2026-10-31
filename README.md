@@ -150,8 +150,8 @@ Telegram se envían por separado: si uno falla, el otro sale igual.
 - **Al día en seguridad:** el runtime, el sistema y las dependencias se mantienen con los últimos
   parches y se revisan periódicamente.
 - Identity y acceso por proyecto protegen API, dashboard y administración.
-- Verificación en dos pasos obligatoria (TOTP o código por correo con Brevo), con bloqueo de 15
-  minutos tras 5 códigos errados y sin reutilizar códigos.
+- Verificación en dos pasos obligatoria (TOTP o código por correo con Brevo), con bloqueo
+  temporal ante códigos errados y sin reutilizar códigos.
 - Antes de publicar, lee [SECURITY.md](SECURITY.md) y ejecuta `git status` para comprobar
   que no se incluyen configuraciones locales, secretos, datos de prueba, `.vs`, `bin` u `obj`.
 - Las pruebas E2E corren en [qa-evidencia](https://d4i3vsgw7xwmh.cloudfront.net) de lunes a
