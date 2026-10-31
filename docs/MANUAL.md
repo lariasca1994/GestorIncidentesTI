@@ -238,7 +238,7 @@ Comprobado en el código del proyecto (`Program.cs`, `Controllers/IncidentesCont
   abierta solo con la contraseña no entra a ninguna página; un código de la app no se acepta dos
   veces; 5 códigos errados bloquean la cuenta 15 minutos; el código del correo vence en 10
   minutos, admite 5 intentos y se guarda solo como huella.
-- **Cookie de sesión `HttpOnly`** protegida por el servidor; sin sesión, toda página interna
+- **Cookie de sesión segura** protegida por el servidor; sin sesión, toda página interna
   redirige al inicio de sesión.
 - **Aislamiento por proyecto:** el dashboard, la lista, el detalle y la API filtran por el proyecto
   de la cuenta. Cambiar el identificador en la URL no muestra incidentes de otros proyectos.
