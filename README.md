@@ -144,6 +144,9 @@ Telegram se envían por separado: si uno falla, el otro sale igual.
 
 ### Seguridad y estado
 
+- **Bloqueo temporal** ante intentos fallidos repetidos de contraseña o de código.
+- **Registro de eventos de seguridad:** ingresos, intentos fallidos, bloqueos y cambios de
+  contraseña quedan registrados (nunca contraseñas ni códigos) y se depuran solos.
 - **Al día en seguridad:** el runtime, el sistema y las dependencias se mantienen con los últimos
   parches y se revisan periódicamente.
 - Identity y acceso por proyecto protegen API, dashboard y administración.

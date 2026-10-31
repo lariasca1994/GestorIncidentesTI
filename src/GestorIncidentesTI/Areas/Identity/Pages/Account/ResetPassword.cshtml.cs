@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using GestorIncidentesTI.Data;
+using GestorIncidentesTI.Services;
 
 namespace GestorIncidentesTI.Areas.Identity.Pages.Account;
 
@@ -104,6 +105,10 @@ public class ResetPasswordModel : PageModel
         var result = await _userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
         if (result.Succeeded)
         {
+            // Contraseña nueva: se levanta el bloqueo por intentos fallidos y queda en la auditoría.
+            await _userManager.SetLockoutEndDateAsync(user, null);
+            await _userManager.ResetAccessFailedCountAsync(user);
+            await HttpContext.RequestServices.GetRequiredService<Auditoria>().RegistrarAsync(Auditoria.ClaveCambiada, user);
             return RedirectToPage("./ResetPasswordConfirmation");
         }
 

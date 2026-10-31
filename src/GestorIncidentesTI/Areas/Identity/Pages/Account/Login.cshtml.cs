@@ -120,9 +120,17 @@ public class LoginModel : PageModel
             // Con método configurado se emite el pase de Identity (10 minutos) y se pide el
             // código; sin método, la sesión queda limitada a elegirlo (DosPasosObligatorioMiddleware).
             var user = await _userManager.FindByEmailAsync(Input.Email);
+            // Cinco contraseñas erradas seguidas bloquean la cuenta un tiempo (Program.cs).
+            var yaBloqueada = user is not null && await _userManager.IsLockedOutAsync(user);
             var result = user is null
                 ? Microsoft.AspNetCore.Identity.SignInResult.Failed
-                : await _signInManager.CheckPasswordSignInAsync(user, Input.Password, lockoutOnFailure: false);
+                : await _signInManager.CheckPasswordSignInAsync(user, Input.Password, lockoutOnFailure: true);
+            if (user is not null && !yaBloqueada && !result.Succeeded)
+            {
+                var auditoria = HttpContext.RequestServices.GetRequiredService<Auditoria>();
+                await auditoria.RegistrarAsync(Auditoria.ClaveErrada, user);
+                if (result.IsLockedOut) await auditoria.RegistrarAsync(Auditoria.CuentaBloqueada, user);
+            }
             if (result.IsLockedOut)
             {
                 _logger.LogWarning("User account locked out.");

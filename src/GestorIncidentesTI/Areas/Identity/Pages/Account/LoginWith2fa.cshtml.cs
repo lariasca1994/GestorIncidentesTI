@@ -67,13 +67,16 @@ public class LoginWith2faModel : PageModel
         if (user is null) return VolverAlIngreso();
 
         var resultado = await _dosPasos.VerificarAsync(user, Metodo!, Codigo);
+        var auditoria = HttpContext.RequestServices.GetRequiredService<Auditoria>();
         if (resultado != ResultadoCodigo.Correcto)
         {
+            await auditoria.RegistrarAsync(Auditoria.CodigoErrado, user);
             _logger.LogWarning("Código de verificación incorrecto para el usuario {UserId}.", user.Id);
             ModelState.AddModelError(string.Empty, DosPasos.Mensaje(resultado));
             return Page();
         }
 
+        await auditoria.RegistrarAsync(Auditoria.Ingreso, user);
         await HttpContext.SignOutAsync(IdentityConstants.TwoFactorUserIdScheme);
         await _signInManager.SignInWithClaimsAsync(user, RememberMe,
             new[] { new Claim("amr", DosPasosObligatorioMiddleware.ClaimMfa) });

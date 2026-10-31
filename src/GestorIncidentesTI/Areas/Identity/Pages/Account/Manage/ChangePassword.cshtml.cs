@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using GestorIncidentesTI.Data;
+using GestorIncidentesTI.Services;
 
 namespace GestorIncidentesTI.Areas.Identity.Pages.Account.Manage;
 
@@ -117,6 +118,7 @@ public class ChangePasswordModel : PageModel
             return Page();
         }
 
+        await HttpContext.RequestServices.GetRequiredService<Auditoria>().RegistrarAsync(Auditoria.ClaveCambiada, user);
         await _signInManager.RefreshSignInAsync(user);
         _logger.LogInformation("User changed their password successfully.");
         StatusMessage = "Your password has been changed.";

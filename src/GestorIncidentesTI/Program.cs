@@ -56,6 +56,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
        maxRetryCount: 6, maxRetryDelay: TimeSpan.FromSeconds(10), errorNumbersToAdd: null)));
 
 builder.Services.AddScoped<ISlaService, SlaService>();
+builder.Services.AddScoped<Auditoria>();
 
 // Avisos por correo (Brevo) al crear o completar incidentes y al crear
 // proyectos. La API key va en el secret Brevo__ApiKey de la Container App.

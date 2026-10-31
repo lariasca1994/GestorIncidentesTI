@@ -13,10 +13,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<SlaDefinicion> SlaDefiniciones => Set<SlaDefinicion>();
     public DbSet<HistorialEstado> HistorialEstados => Set<HistorialEstado>();
     public DbSet<Proyecto> Proyectos => Set<Proyecto>();
+    public DbSet<EventoSeguridad> EventosSeguridad => Set<EventoSeguridad>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder); // obligatorio, primero — crea las tablas de Identity (AspNetUsers, AspNetRoles, etc.)
+
+        modelBuilder.Entity<EventoSeguridad>(e =>
+        {
+            e.Property(x => x.Tipo).HasMaxLength(40);
+            e.Property(x => x.UsuarioId).HasMaxLength(450);
+            e.HasIndex(x => x.Fecha);
+            e.HasIndex(x => x.UsuarioId);
+        });
 
         modelBuilder.Entity<Incidente>()
             .HasMany(i => i.Historial)

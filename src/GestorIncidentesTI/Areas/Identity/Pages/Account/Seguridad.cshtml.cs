@@ -81,6 +81,7 @@ public class SeguridadModel : PageModel
 
         var primerMetodo = Eligiendo;
         await _dosPasos.ActivarAsync(user, Metodo);
+        await HttpContext.RequestServices.GetRequiredService<Auditoria>().RegistrarAsync(Auditoria.MetodoActivado, user);
         var nombre = Metodo == DosPasos.App ? "La app autenticadora" : "El código por correo";
         if (primerMetodo)
         {
