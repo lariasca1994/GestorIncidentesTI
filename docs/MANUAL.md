@@ -1,9 +1,9 @@
-# 📘 Manual de usuario · Gestor de Incidentes TI
+# 📘 Manual de usuario · Gestor de incidentes TI
 
 Guía para usar la plataforma paso a paso: qué significa cada campo, qué datos se ingresan y qué
 protege la plataforma. Para la parte técnica vuelve al [README](../README.md).
 
-**Demo:** [Gestor de Incidentes TI (Azure Container Apps)](https://gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io/)
+**Demo:** [Gestor de incidentes TI (Azure Container Apps)](https://gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io/)
 
 ## Contenido
 
@@ -37,9 +37,9 @@ nivel de soporte: N1 → N2 → N3. Cada cambio queda en el historial.
 
 Es una demo de portafolio:
 
-- **La recuperación de contraseña no envía correos reales** (el envío de Identity está simulado):
-  guarda tu contraseña en un gestor.
-- La verificación en dos pasos es obligatoria: ten a mano tu app autenticadora o tu correo.
+- La verificación en dos pasos es obligatoria: ten a mano tu app autenticadora o tu correo. Si
+  pierdes tu contraseña o tu app, la recuperación llega **al correo de tu cuenta**
+  (ver [4.2.2](#422-olvidé-mi-contraseña) y [4.2.3](#423-perdí-mi-autenticador)).
 - No registres datos personales reales en los incidentes: las cuentas del mismo proyecto los ven.
 - Usa **Recordarme en este equipo** solo en dispositivos personales.
 
@@ -79,7 +79,7 @@ Qué servicio de nube, base de datos o API usa el proyecto y para qué sirve cad
 |---|---|---|
 | ![Azure Container Apps](https://img.shields.io/badge/Azure_Container_Apps-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white) | Nube | Corre la aplicación ASP.NET Core 10: el dashboard (Razor Pages) y la API REST. Escala a cero sin visitas. |
 | ![Azure SQL](https://img.shields.io/badge/Azure_SQL-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white) | Base de datos | Guarda proyectos, incidentes, usuarios, SLA y auditoría. Es serverless: se pausa sola sin consultas. |
-| ![Brevo](https://img.shields.io/badge/Brevo-0B996E?style=for-the-badge&logo=brevo&logoColor=white) | API / servicio externo | Envía los avisos por correo al crear, resolver o cerrar incidentes y al crear proyectos. |
+| ![Brevo](https://img.shields.io/badge/Brevo-0B996E?style=for-the-badge&logo=brevo&logoColor=white) | API / servicio externo | Envía los avisos por correo al crear, resolver o cerrar incidentes y al crear proyectos, y los correos de la cuenta: códigos de verificación, enlace para recuperar la contraseña y código de "Perdí mi autenticador". |
 | ![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white) | API / servicio externo | Envía el mismo aviso resumido, con un botón para abrir el incidente (opcional). |
 | ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-181717?style=for-the-badge&logo=githubactions&logoColor=white) | Automatización | Construye la imagen, la publica en GitHub Container Registry y actualiza la Container App con OpenID Connect, sin secretos de publicación. |
 | ![qa-evidencia](https://img.shields.io/badge/qa--evidencia-2EAD33?style=for-the-badge&logo=playwright&logoColor=white) | Pruebas automatizadas | Prueba la demo automáticamente y publica la evidencia. |
@@ -111,7 +111,7 @@ configuran en el servidor.
 | 2 | Contraseña | Tu contraseña |
 | 3 | Recordarme en este equipo | Márcalo solo en tu equipo personal: la sesión se mantiene al cerrar el navegador |
 | 4 | Ingresar | Pide el código de tu verificación en dos pasos (ver 4.2.1); al escribirlo y pulsar **Verificar** entras |
-| 5 | ¿Olvidaste tu contraseña? | Inicia la recuperación (ver [Límites](#1-proyecto-objetivos-y-alcances)) |
+| 5 | ¿Olvidaste tu contraseña? | Abre la recuperación de la contraseña (ver [4.2.2](#422-olvidé-mi-contraseña)) |
 
 ### 4.2.1 Verificación en dos pasos (obligatoria)
 
@@ -125,8 +125,64 @@ cuenta) eliges cómo recibirlo:
 
 Confirma el método escribiendo el primer código y pulsando **Activar**. En los siguientes ingresos
 escribe el código y pulsa **Verificar**; si tienes los dos métodos, la pantalla ofrece usar el otro.
-Desde **Seguridad** (menú superior) puedes **agregar el método que no elegiste** y escoger cuál se
-pide **por defecto**. La verificación no se puede desactivar.
+Desde **Seguridad** (menú superior) puedes **agregar el método que no elegiste**, escoger cuál se
+pide **por defecto**, **cambiar la contraseña** y **generar códigos de recuperación**. La
+verificación no se puede desactivar.
+
+En la pantalla del código también están **Perdí mi autenticador** (ver 4.2.3) y, si tienes
+códigos de recuperación sin usar, **Usar un código de recuperación** (ver 4.2.4).
+
+### 4.2.2 Olvidé mi contraseña
+
+![Pantalla para recuperar la contraseña](img/manual/08-recuperar-contrasena.png)
+
+| # | Campo | Qué escribir |
+|:-:|---|---|
+| 1 | Correo | El correo de tu cuenta |
+| 2 | Enviar enlace | Envía a ese correo un enlace para crear una contraseña nueva |
+
+1. En el inicio de sesión pulsa **¿Olvidaste tu contraseña?**, escribe tu correo y pulsa
+   **Enviar enlace**. La respuesta es la misma exista o no la cuenta (así nadie puede averiguar
+   qué correos están registrados).
+2. Abre el correo **"Restablece tu contraseña del Gestor de incidentes TI"** y pulsa
+   **Crear contraseña nueva**. El enlace vence en 30 minutos y sirve una sola vez; si pides otro,
+   el anterior deja de servir.
+3. Escribe la **contraseña nueva** y su **confirmación** (no se vuelve a pedir el correo) y pulsa
+   **Guardar contraseña**.
+4. Al guardarla se **cierran las sesiones abiertas** en otros equipos, tu verificación en dos pasos
+   **sigue igual** y la pantalla muestra tus **códigos de recuperación nuevos**: los anteriores
+   quedan anulados. Guárdalos antes de salir.
+
+### 4.2.3 Perdí mi autenticador
+
+Si ya no tienes la app autenticadora (cambiaste de teléfono, la borraste):
+
+1. Ingresa con tu correo y contraseña. En la pantalla del código pulsa **Perdí mi autenticador**.
+2. Te llega un código de 6 dígitos **al correo de tu cuenta**, aunque no hayas activado el código
+   por correo. Vence en 15 minutos; puedes pedir otro con **Enviar un código nuevo** (hay un límite
+   de envíos). Escríbelo y pulsa **Continuar**.
+3. Escanea el QR con tu app nueva (o escribe la clave que aparece debajo) y escribe el código que
+   muestra. Pulsa **Activar e ingresar**.
+4. Solo en ese momento la app anterior deja de servir, se cierran las demás sesiones, entras a
+   **Seguridad** y ves tus **códigos de recuperación nuevos** (los anteriores quedan anulados).
+   Acertar el código del correo no abre la sesión por sí solo: hace falta activar la app nueva.
+
+Los códigos errados, del correo o de la app, cuentan para el bloqueo temporal de la cuenta.
+
+### 4.2.4 Códigos de recuperación
+
+Son códigos de un solo uso para ingresar si no tienes a mano tu app autenticadora (pantalla del
+código → **Usar un código de recuperación**). Se generan nuevos, y **todos los anteriores quedan
+anulados en ese mismo momento**, cuando:
+
+| Momento | Dónde los ves |
+|---|---|
+| Cambias la contraseña desde **Seguridad → Cambiar contraseña** | En Seguridad, al guardar |
+| Guardas la contraseña nueva con **¿Olvidaste tu contraseña?** | En la pantalla de confirmación |
+| Activas la app nueva con **Perdí mi autenticador** | En Seguridad, al entrar |
+| Pulsas **Generar códigos de recuperación nuevos** en Seguridad | En Seguridad |
+
+Se muestran **una sola vez**: guárdalos en un lugar seguro. Seguridad indica cuántos te quedan.
 
 ### 4.3 Dashboard
 
@@ -213,6 +269,9 @@ los plazos y sube de nivel los que superaron su umbral.
 **¿Puedo cambiarme de proyecto?** No desde la aplicación; crea una cuenta nueva eligiendo el otro
 proyecto.
 
+**No me llegó el correo de recuperación.** Revisa la carpeta de spam y que escribiste el correo de
+la cuenta. Si pediste varios enlaces o códigos, usa el último: los anteriores dejan de servir.
+
 ## 5. Seguridad: tu información protegida
 
 Tu confianza es lo primero: la plataforma solo pide los datos necesarios para funcionar, los protege y no los comparte con terceros. Esto es lo que se guarda y cómo se protege.
@@ -226,6 +285,8 @@ Tu confianza es lo primero: la plataforma solo pide los datos necesarios para fu
 | Proyecto | Limitar lo que ves | Azure SQL | Tú y los administradores |
 | Incidentes, comentarios y nombre del solicitante | Gestionar la falla | Azure SQL | Las cuentas del mismo proyecto y los administradores |
 | Verificación en dos pasos | Confirmar que eres tú al ingresar | Azure SQL: clave de la app en el almacén de ASP.NET Identity y código del correo **solo como huella** | Nadie desde la aplicación |
+| Códigos de recuperación | Ingresar sin la app autenticadora | Azure SQL, en el almacén de ASP.NET Identity | Tú, una sola vez al generarlos |
+| Enlace de recuperación de contraseña | Crear una contraseña nueva | Azure SQL, **solo su huella** y su vencimiento | Nadie: llega solo a tu correo |
 | Sesión | Mantenerte conectado | Cookie de tu navegador | Cifrada por el servidor e invisible para JavaScript |
 
 ### Cómo se protege tu información
@@ -250,6 +311,11 @@ Comprobado en el código del proyecto (`Program.cs`, `Controllers/IncidentesCont
 - **Secretos fuera del repositorio:** la cadena de conexión, las cuentas Admin y la clave de Brevo
   viven en los secretos de la Container App.
 - **Bloqueo temporal** ante intentos fallidos repetidos de contraseña o de código.
+- **Recuperación segura:** el enlace para cambiar la contraseña sirve una sola vez, vence pronto y
+  en la base queda solo su huella; la respuesta no revela si un correo tiene cuenta. Al cambiar la
+  contraseña o la app autenticadora se cierran las demás sesiones y se renuevan los códigos de
+  recuperación (los anteriores quedan anulados). La app anterior solo deja de servir cuando la
+  nueva queda activa.
 - **Registro de eventos de seguridad:** ingresos, intentos fallidos, bloqueos y cambios de
   contraseña quedan registrados (nunca contraseñas ni códigos) y se depuran solos.
 - **Al día en seguridad:** el runtime, el sistema y las dependencias se mantienen con los últimos

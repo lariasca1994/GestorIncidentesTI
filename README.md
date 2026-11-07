@@ -1,4 +1,4 @@
-# Gestor de Incidentes TI (mini ITSM)
+# Gestor de incidentes TI (mini ITSM)
 
 <p>
   <a href="https://gestorincidentesti.livelywater-fe29fe0b.australiaeast.azurecontainerapps.io/"><img src="docs/demo-badge.svg" alt="Abrir la demo en vivo" height="32"></a>
@@ -64,6 +64,9 @@ de estado.
 - Historial de auditoría por cada cambio de estado o nivel
 - Verificación en dos pasos obligatoria: app autenticadora o código por correo, a elección; el
   otro método se agrega desde **Seguridad**
+- Recuperación de cuenta por correo real (Brevo): **¿Olvidaste tu contraseña?** con enlace de un
+  solo uso que vence, **Perdí mi autenticador** con código al correo de la cuenta y códigos de
+  recuperación que se renuevan (anulando los anteriores) al cambiar la contraseña o la app
 
 ### Stack
 
@@ -90,6 +93,7 @@ facturación, entre otros).
 ```
 GestorIncidentesTI/
 ├── GestorIncidentesTI.sln
+├── tests/GestorIncidentesTI.Tests/  # Pruebas unitarias (xUnit): recuperación, códigos y correos
 └── src/GestorIncidentesTI/
     ├── Controllers/       # API REST
     ├── Data/               # DbContext + seed de SLA
@@ -152,11 +156,19 @@ Telegram se envían por separado: si uno falla, el otro sale igual.
 - Identity y acceso por proyecto protegen API, dashboard y administración.
 - Verificación en dos pasos obligatoria (TOTP o código por correo con Brevo), con bloqueo
   temporal ante códigos errados y sin reutilizar códigos.
+- Recuperación de cuenta: el enlace de "Olvidé mi contraseña" es propio (aleatorio, de un solo
+  uso, con vencimiento y guardado solo como huella), no revela si el correo existe y no depende de
+  las claves de cifrado del contenedor. Al cambiar la contraseña o la app autenticadora se renueva
+  el SecurityStamp (se cierran las demás sesiones) y se generan códigos de recuperación nuevos que
+  anulan los anteriores. En "Perdí mi autenticador" acertar el código del correo no abre la sesión:
+  la app anterior solo se reemplaza al activar la nueva.
 - Antes de publicar, lee [SECURITY.md](SECURITY.md) y ejecuta `git status` para comprobar
   que no se incluyen configuraciones locales, secretos, datos de prueba, `.vs`, `bin` u `obj`.
 - Las pruebas E2E corren en [qa-evidencia](https://d4i3vsgw7xwmh.cloudfront.net) de lunes a
   viernes a las 11:00 y 17:00 (hora Bogotá): hasta el 31 de octubre de 2026 solo en la de
-  las 11:00, desde noviembre en ambas. Faltan pruebas unitarias.
+  las 11:00, desde noviembre en ambas.
+- Pruebas unitarias con xUnit (`dotnet test`), también en cada push y pull request: recuperación
+  de contraseña, "Perdí mi autenticador", códigos de recuperación, TOTP y correos.
 
 ---
 
@@ -166,7 +178,7 @@ Telegram se envían por separado: si uno falla, el otro sale igual.
 |---|---|
 | ![Azure Container Apps](https://img.shields.io/badge/Azure_Container_Apps-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white) | Corre la aplicación ASP.NET Core 10: el dashboard (Razor Pages) y la API REST. Escala a cero sin visitas. |
 | ![Azure SQL](https://img.shields.io/badge/Azure_SQL-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white) | Guarda proyectos, incidentes, usuarios, SLA y auditoría. Es serverless: se pausa sola sin consultas. |
-| ![Brevo](https://img.shields.io/badge/Brevo-0B996E?style=for-the-badge&logo=brevo&logoColor=white) | Envía los avisos por correo al crear, resolver o cerrar incidentes y al crear proyectos. |
+| ![Brevo](https://img.shields.io/badge/Brevo-0B996E?style=for-the-badge&logo=brevo&logoColor=white) | Envía los avisos por correo al crear, resolver o cerrar incidentes y al crear proyectos, y los correos de la cuenta (códigos de verificación, recuperación de contraseña y de autenticador) con el remitente "Gestor de incidentes TI". |
 | ![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white) | Envía el mismo aviso resumido, con un botón para abrir el incidente (opcional). |
 | ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-181717?style=for-the-badge&logo=githubactions&logoColor=white) | Construye la imagen, la publica en GitHub Container Registry y actualiza la Container App con OpenID Connect, sin secretos de publicación. |
 | ![qa-evidencia](https://img.shields.io/badge/qa--evidencia-2EAD33?style=for-the-badge&logo=playwright&logoColor=white) | Prueba la demo automáticamente y publica la evidencia. |
@@ -177,16 +189,16 @@ Telegram se envían por separado: si uno falla, el otro sale igual.
 
 ### 5.1 Crear una cuenta
 
-1. En el menú, pulsa **Register** (o **Register as a new user** desde el inicio de sesión).
+1. En el menú, pulsa **Registrarme** (o **Crear una cuenta nueva** desde el inicio de sesión).
 2. Completa el formulario:
 
    | Campo | Dato |
    |---|---|
-   | Email | Correo con el que vas a iniciar sesión |
+   | Correo | Correo con el que vas a iniciar sesión |
    | Proyecto | Proyecto al que perteneces, de la lista |
-   | Password / Confirm Password | Contraseña y su confirmación |
+   | Contraseña / Confirmar contraseña | Contraseña y su confirmación |
 
-3. Pulsa **Register**. La cuenta queda con rol **Usuario** dentro del proyecto elegido.
+3. Pulsa **Crear cuenta**. La cuenta queda con rol **Usuario** dentro del proyecto elegido.
 4. Elige tu verificación en dos pasos: **App autenticadora** (escanea el QR y escribe el primer
    código) o **Código por correo**, y pulsa **Activar**.
 
@@ -195,8 +207,17 @@ Telegram se envían por separado: si uno falla, el otro sale igual.
 1. Pulsa **Iniciar sesión**, escribe tu correo y contraseña y pulsa **Ingresar**.
 2. Escribe el código de 6 dígitos de tu app autenticadora (o el que llega por correo) y pulsa
    **Verificar**. En **Seguridad** puedes agregar el otro método y elegir cuál se pide por defecto.
-3. Si olvidaste la contraseña, usa **¿Olvidaste tu contraseña?**.
-4. El menú muestra **Dashboard**, **Incidentes** y, para administradores, **Proyectos**.
+3. Si olvidaste la contraseña, usa **¿Olvidaste tu contraseña?**: escribe tu correo, abre el
+   enlace que llega (vence en 30 minutos y sirve una vez) y escribe solo la contraseña nueva y su
+   confirmación. Se cierran las demás sesiones, la verificación en dos pasos sigue igual y se
+   muestran tus códigos de recuperación nuevos.
+4. Si perdiste la app autenticadora, en la pantalla del código pulsa **Perdí mi autenticador**:
+   llega un código al correo de la cuenta, luego configuras la app nueva con el QR y, al activarla,
+   entras y ves tus códigos de recuperación nuevos. Si tienes códigos de recuperación, también
+   puedes usar **Usar un código de recuperación**.
+5. En **Seguridad** puedes cambiar la contraseña y generar códigos de recuperación nuevos (los
+   anteriores quedan anulados).
+6. El menú muestra **Dashboard**, **Incidentes** y, para administradores, **Proyectos**.
 
 ### 5.3 Ver el dashboard
 
