@@ -41,7 +41,7 @@ public static class AvisosIncidente
             new[] { ChipEstado(incidente.Estado), ChipPrioridad(incidente.Prioridad), ChipNeutro($"Nivel {incidente.NivelActual}") },
             detalles, notas, enlace, "Ver incidente");
 
-        return ($"[Gestor TI] Nuevo incidente #{incidente.Id} · {Prioridad(incidente.Prioridad)} · {incidente.Titulo}", aviso);
+        return ($"[{Portal.Nombre}] Nuevo incidente #{incidente.Id} · {Prioridad(incidente.Prioridad)} · {incidente.Titulo}", aviso);
     }
 
     public static (string Asunto, Aviso Aviso) Completado(Incidente incidente, string? proyecto, string? actor, string? comentario, string? enlace)
@@ -70,7 +70,7 @@ public static class AvisosIncidente
             new[] { ChipEstado(incidente.Estado), ChipPrioridad(incidente.Prioridad), sla },
             detalles, notas, enlace, "Ver incidente");
 
-        return ($"[Gestor TI] Incidente #{incidente.Id} {estado.ToLowerInvariant()} · {incidente.Titulo}", aviso);
+        return ($"[{Portal.Nombre}] Incidente #{incidente.Id} {estado.ToLowerInvariant()} · {incidente.Titulo}", aviso);
     }
 
     public static (string Asunto, Aviso Aviso) ProyectoCreado(Proyecto proyecto, string? actor, string? enlace)
@@ -91,7 +91,7 @@ public static class AvisosIncidente
             },
             notas, enlace, "Ver proyectos");
 
-        return ($"[Gestor TI] Nuevo proyecto · {proyecto.Nombre}", aviso);
+        return ($"[{Portal.Nombre}] Nuevo proyecto · {proyecto.Nombre}", aviso);
     }
 
     private static List<(string, string)> Base(Incidente incidente, string? proyecto) => new()

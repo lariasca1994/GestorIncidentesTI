@@ -32,7 +32,6 @@
 <div class="enlaces-acceso">
     <a id="forgot-password" asp-page="./ForgotPassword">¿Olvidaste tu contraseña?</a>
     <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Crear una cuenta nueva</a>
-    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Reenviar el correo de confirmación</a>
 </div>
 
 @if ((Model.ExternalLogins?.Count ?? 0) > 0)

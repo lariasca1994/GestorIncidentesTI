@@ -1,112 +1,79 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using GestorIncidentesTI.Data;
+using GestorIncidentesTI.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-using GestorIncidentesTI.Data;
 
 namespace GestorIncidentesTI.Areas.Identity.Pages.Account;
 
+/// <summary>
+/// Segundo paso con un código de recuperación (ya se puso la contraseña). Cada código sirve
+/// una vez; los errores cuentan para el bloqueo temporal, como los demás códigos.
+/// </summary>
 public class LoginWithRecoveryCodeModel : PageModel
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ILogger<LoginWithRecoveryCodeModel> _logger;
+    private readonly DosPasos _dosPasos;
 
-    public LoginWithRecoveryCodeModel(
-        SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager,
-        ILogger<LoginWithRecoveryCodeModel> logger)
+    public LoginWithRecoveryCodeModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, DosPasos dosPasos)
     {
         _signInManager = signInManager;
         _userManager = userManager;
-        _logger = logger;
+        _dosPasos = dosPasos;
     }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
     [BindProperty]
-    public InputModel Input { get; set; } = default!;
+    public string? Codigo { get; set; }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
+    [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
-    public class InputModel
-    {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [BindProperty]
-        [Required]
-        [DataType(DataType.Text)]
-        [Display(Name = "Recovery Code")]
-        public string RecoveryCode { get; set; } = default!;
-    }
+    public async Task<IActionResult> OnGetAsync() =>
+        await _signInManager.GetTwoFactorAuthenticationUserAsync() is null ? VolverAlIngreso() : Page();
 
-    public async Task<IActionResult> OnGetAsync(string? returnUrl = null)
+    public async Task<IActionResult> OnPostAsync()
     {
-        // Ensure the user has gone through the username & password screen first
         var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
-        if (user == null)
+        if (user is null) return VolverAlIngreso();
+
+        if (await _userManager.IsLockedOutAsync(user))
         {
-            throw new InvalidOperationException($"Unable to load two-factor authentication user.");
-        }
-
-        ReturnUrl = returnUrl;
-
-        return Page();
-    }
-
-    public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
-    {
-        if (!ModelState.IsValid)
-        {
+            ModelState.AddModelError(string.Empty, DosPasos.Mensaje(ResultadoCodigo.Bloqueado));
             return Page();
         }
 
-        var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
-        if (user == null)
+        var auditoria = HttpContext.RequestServices.GetRequiredService<Auditoria>();
+        var codigo = (Codigo ?? "").Replace(" ", "").Trim();
+        var resultado = codigo.Length is > 0 and <= 20
+            ? await _userManager.RedeemTwoFactorRecoveryCodeAsync(user, codigo)
+            : IdentityResult.Failed();
+        if (!resultado.Succeeded)
         {
-            throw new InvalidOperationException($"Unable to load two-factor authentication user.");
-        }
-
-        var recoveryCode = Input.RecoveryCode.Replace(" ", string.Empty);
-
-        var result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(recoveryCode);
-
-        var userId = await _userManager.GetUserIdAsync(user);
-
-        if (result.Succeeded)
-        {
-            _logger.LogInformation("User with ID '{UserId}' logged in with a recovery code.", user.Id);
-            return LocalRedirect(returnUrl ?? Url.Content("~/"));
-        }
-        if (result.IsLockedOut)
-        {
-            _logger.LogWarning("User account locked out.");
-            return RedirectToPage("./Lockout");
-        }
-        else
-        {
-            _logger.LogWarning("Invalid recovery code entered for user with ID '{UserId}' ", user.Id);
-            ModelState.AddModelError(string.Empty, "Invalid recovery code entered.");
+            await _userManager.AccessFailedAsync(user);
+            await auditoria.RegistrarAsync(Auditoria.CodigoErrado, user);
+            ModelState.AddModelError(string.Empty, await _userManager.IsLockedOutAsync(user)
+                ? DosPasos.Mensaje(ResultadoCodigo.Bloqueado)
+                : "El código de recuperación no es correcto o ya se usó.");
             return Page();
         }
+
+        await _userManager.ResetAccessFailedCountAsync(user);
+        await auditoria.RegistrarAsync(Auditoria.Ingreso, user);
+        await HttpContext.SignOutAsync(IdentityConstants.TwoFactorUserIdScheme);
+        await _signInManager.SignInWithClaimsAsync(user, false,
+            new[] { new Claim("amr", DosPasosObligatorioMiddleware.ClaimMfa) });
+
+        var restantes = await _dosPasos.CodigosRecuperacionAsync(user);
+        TempData["Mensaje"] = $"Ingresaste con un código de recuperación. Te quedan {restantes}; aquí puedes generar nuevos.";
+        return RedirectToPage("./Seguridad");
+    }
+
+    private IActionResult VolverAlIngreso()
+    {
+        TempData["ErrorMessage"] = "La verificación venció. Ingresa de nuevo.";
+        return RedirectToPage("./Login", new { ReturnUrl });
     }
 }

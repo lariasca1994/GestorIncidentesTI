@@ -576,3 +576,37 @@ body.portada-cuerpo {
   cursor: pointer;
   text-align: left;
 }
+
+/* Códigos de recuperación recién generados (se muestran una sola vez). */
+.codigos-recuperacion {
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px dashed var(--p-acento);
+  border-radius: 0.6rem;
+  background: var(--p-acento-suave);
+}
+
+.codigos-recuperacion .codigos-titulo {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+}
+
+.codigos-recuperacion .codigos-ayuda {
+  margin: 0 0 0.75rem;
+  color: var(--p-suave);
+  font-size: 0.85rem;
+}
+
+.codigos-recuperacion ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.codigos-recuperacion code {
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+}

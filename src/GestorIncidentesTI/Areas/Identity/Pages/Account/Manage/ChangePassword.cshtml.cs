@@ -1,128 +1,84 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
+using System.Security.Claims;
+using GestorIncidentesTI.Data;
+using GestorIncidentesTI.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-using GestorIncidentesTI.Data;
-using GestorIncidentesTI.Services;
 
 namespace GestorIncidentesTI.Areas.Identity.Pages.Account.Manage;
 
+/// <summary>
+/// Cambio de contraseña desde Seguridad. Al guardarla se cierran las demás sesiones
+/// (SecurityStamp), esta sigue abierta y se generan códigos de recuperación nuevos que
+/// anulan los anteriores; se muestran una sola vez en Seguridad.
+/// </summary>
 public class ChangePasswordModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly ILogger<ChangePasswordModel> _logger;
+    private readonly DosPasos _dosPasos;
 
-    public ChangePasswordModel(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        ILogger<ChangePasswordModel> logger)
+    public ChangePasswordModel(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, DosPasos dosPasos)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _logger = logger;
+        _dosPasos = dosPasos;
     }
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
     [BindProperty]
-    public InputModel Input { get; set; } = default!;
+    public InputModel Input { get; set; } = new();
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
-    [TempData]
-    public string? StatusMessage { get; set; }
-
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
     public class InputModel
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [Required]
+        [Required(ErrorMessage = "Escribe tu contraseña actual.")]
         [DataType(DataType.Password)]
-        [Display(Name = "Current password")]
-        public string OldPassword { get; set; } = default!;
+        public string OldPassword { get; set; } = "";
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [Required(ErrorMessage = "Escribe la contraseña nueva.")]
+        [StringLength(100, ErrorMessage = "La contraseña debe tener entre {2} y {1} caracteres.", MinimumLength = 6)]
         [DataType(DataType.Password)]
-        [Display(Name = "New password")]
-        public string NewPassword { get; set; } = default!;
+        public string NewPassword { get; set; } = "";
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
+        [Required(ErrorMessage = "Confirma la contraseña nueva.")]
         [DataType(DataType.Password)]
-        [Display(Name = "Confirm new password")]
-        [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
-        public string? ConfirmPassword { get; set; }
+        [Compare(nameof(NewPassword), ErrorMessage = "Las contraseñas no coinciden.")]
+        public string ConfirmPassword { get; set; } = "";
     }
 
     public async Task<IActionResult> OnGetAsync()
     {
         var user = await _userManager.GetUserAsync(User);
-        if (user == null)
-        {
-            return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
-        }
-
-        var hasPassword = await _userManager.HasPasswordAsync(user);
-        if (!hasPassword)
-        {
-            return RedirectToPage("./SetPassword");
-        }
-
-        return Page();
+        return user is null ? Challenge() : Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (!ModelState.IsValid)
-        {
-            return Page();
-        }
+        if (!ModelState.IsValid) return Page();
 
         var user = await _userManager.GetUserAsync(User);
-        if (user == null)
-        {
-            return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
-        }
+        if (user is null) return Challenge();
 
-        var changePasswordResult = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
-        if (!changePasswordResult.Succeeded)
+        var resultado = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
+        if (!resultado.Succeeded)
         {
-            foreach (var error in changePasswordResult.Errors)
-            {
+            foreach (var error in resultado.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
-            }
             return Page();
         }
 
         await HttpContext.RequestServices.GetRequiredService<Auditoria>().RegistrarAsync(Auditoria.ClaveCambiada, user);
-        await _signInManager.RefreshSignInAsync(user);
-        _logger.LogInformation("User changed their password successfully.");
-        StatusMessage = "Your password has been changed.";
+        var codigos = await _dosPasos.NuevosCodigosRecuperacionAsync(user);
 
-        return RedirectToPage();
+        // ChangePasswordAsync renovó el SecurityStamp: se vuelve a firmar esta sesión, con su
+        // segundo paso y su "Recordarme", para que solo se cierren las demás.
+        var actual = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+        await _signInManager.SignInWithClaimsAsync(user, actual.Properties?.IsPersistent ?? false,
+            new[] { new Claim("amr", DosPasosObligatorioMiddleware.ClaimMfa) });
+
+        TempData[SeguridadModel.ClaveCodigosNuevos] = string.Join(' ', codigos);
+        TempData["Mensaje"] = "Tu contraseña cambió y se cerraron las demás sesiones.";
+        return RedirectToPage("/Account/Seguridad");
     }
 }

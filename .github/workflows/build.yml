@@ -18,3 +18,4 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet restore GestorIncidentesTI.sln
       - run: dotnet build GestorIncidentesTI.sln --configuration Release --no-restore
+      - run: dotnet test GestorIncidentesTI.sln --configuration Release --no-build

@@ -11,7 +11,8 @@ namespace GestorIncidentesTI.Areas.Identity.Pages.Account;
 /// <summary>
 /// Segundo paso del ingreso: el pase de Identity (cookie TwoFactorUserId, 10 minutos) dice
 /// quién ya puso la contraseña. Se pide el código del método preferido, con la opción de
-/// usar el otro si está activo.
+/// usar el otro si está activo, "Perdí mi autenticador" (código al correo de la cuenta) y,
+/// si la cuenta los tiene, un código de recuperación.
 /// </summary>
 public class LoginWith2faModel : PageModel
 {
@@ -41,6 +42,9 @@ public class LoginWith2faModel : PageModel
     public EstadoDosPasos Estado { get; private set; } = new(false, false, null);
 
     public string? Aviso { get; private set; }
+
+    /// <summary>La cuenta tiene códigos de recuperación sin usar: se ofrece ingresar con uno.</summary>
+    public bool TieneCodigosRecuperacion { get; private set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -90,6 +94,7 @@ public class LoginWith2faModel : PageModel
         if (user is null) return null;
         Estado = await _dosPasos.EstadoAsync(user);
         if (!Estado.Configurado) return null;
+        TieneCodigosRecuperacion = await _dosPasos.CodigosRecuperacionAsync(user) > 0;
         if (!DosPasos.MetodoValido(Metodo) || (Metodo == DosPasos.App && !Estado.App) || (Metodo == DosPasos.Correo && !Estado.Correo))
             Metodo = Estado.Preferido;
         return user;

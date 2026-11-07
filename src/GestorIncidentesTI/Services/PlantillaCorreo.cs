@@ -44,7 +44,7 @@ public static class PlantillaCorreo
             <tr><td align="center">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:{Superficie};border:1px solid {Borde};border-radius:10px;overflow:hidden;font-family:{Fuente};color:{ColorTexto};">
             <tr><td style="background:{Primario};padding:18px 28px;">
-              <div style="font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#ccfbf1;">Gestor de Incidentes TI</div>
+              <div style="font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#ccfbf1;">{E(Portal.Nombre)}</div>
               <div style="font-size:15px;color:#ffffff;margin-top:2px;">{E(aviso.Encabezado)}</div>
             </td></tr>
             <tr><td style="padding:24px 28px 8px;">
@@ -108,7 +108,7 @@ public static class PlantillaCorreo
 
         html.Append($"""
             <tr><td style="padding:20px 28px 22px;border-top:1px solid {Borde};font-size:12px;line-height:1.5;color:{TextoSuave};">
-              {E(aviso.Pie ?? "Aviso automático del Gestor de Incidentes TI. Lo reciben quien hizo la gestión y los administradores.")}
+              {E(aviso.Pie ?? $"Aviso automático del {Portal.Nombre}. Lo reciben quien hizo la gestión y los administradores.")}
             </td></tr>
             </table>
             </td></tr></table>
@@ -122,7 +122,7 @@ public static class PlantillaCorreo
     public static string Texto(Aviso aviso)
     {
         var texto = new StringBuilder();
-        texto.AppendLine($"Gestor de Incidentes TI — {aviso.Encabezado}");
+        texto.AppendLine($"{Portal.Nombre} — {aviso.Encabezado}");
         texto.AppendLine();
         texto.AppendLine(aviso.Titulo);
         if (aviso.Chips.Count > 0) texto.AppendLine(string.Join(" · ", aviso.Chips.Select(c => c.Texto)));
@@ -150,7 +150,7 @@ public static class PlantillaCorreo
     public static string Telegram(Aviso aviso)
     {
         var texto = new StringBuilder();
-        texto.AppendLine($"🛠️ <b>{E(aviso.Encabezado)}</b> · Gestor de Incidentes TI");
+        texto.AppendLine($"🛠️ <b>{E(aviso.Encabezado)}</b> · {E(Portal.Nombre)}");
         texto.AppendLine($"<b>{E(aviso.Titulo)}</b>");
         if (aviso.Chips.Count > 0) texto.AppendLine(E(string.Join(" · ", aviso.Chips.Select(c => c.Texto))));
         texto.AppendLine();

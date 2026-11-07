@@ -1,10 +1,18 @@
 @page
 @model LockoutModel
 @{
-    ViewData["Title"] = "Locked out";
+    ViewData["Title"] = "Cuenta bloqueada";
+    Layout = "/Pages/Shared/_LayoutAcceso.cshtml";
 }
 
-<header>
-    <h1 class="text-danger">@ViewData["Title"]</h1>
-    <p class="text-danger">This account has been locked out, please try again later.</p>
-</header>
+<p class="tarjeta-paso">Acceso</p>
+<h1 class="tarjeta-titulo">@ViewData["Title"]</h1>
+<p class="tarjeta-subtitulo">
+    Por seguridad, la cuenta quedó bloqueada un tiempo tras varios intentos fallidos. Espera unos
+    minutos e intenta de nuevo, o crea una contraseña nueva.
+</p>
+
+<div class="enlaces-acceso">
+    <a asp-page="./ForgotPassword">¿Olvidaste tu contraseña?</a>
+    <a asp-page="./Login">Volver al ingreso</a>
+</div>

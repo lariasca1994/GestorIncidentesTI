@@ -1,121 +1,73 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+using GestorIncidentesTI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
-using GestorIncidentesTI.Data;
-using GestorIncidentesTI.Services;
 
 namespace GestorIncidentesTI.Areas.Identity.Pages.Account;
 
+/// <summary>
+/// Paso 2 de "Olvidé mi contraseña": desde el enlace del correo, solo la contraseña nueva y su
+/// confirmación (la cuenta la dice el enlace). Al guardarla se cierran las sesiones abiertas y
+/// se muestran los códigos de recuperación nuevos (los anteriores quedan anulados).
+/// </summary>
 public class ResetPasswordModel : PageModel
 {
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RecuperacionClave _recuperacion;
 
-    public ResetPasswordModel(UserManager<ApplicationUser> userManager)
-    {
-        _userManager = userManager;
-    }
+    public ResetPasswordModel(RecuperacionClave recuperacion) => _recuperacion = recuperacion;
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Usuario { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? Codigo { get; set; }
+
     [BindProperty]
-    public InputModel Input { get; set; } = default!;
+    [Required(ErrorMessage = "Escribe la contraseña nueva.")]
+    [StringLength(100, ErrorMessage = "La contraseña debe tener entre {2} y {1} caracteres.", MinimumLength = 6)]
+    [DataType(DataType.Password)]
+    public string Password { get; set; } = "";
 
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
-    public class InputModel
+    [BindProperty]
+    [Required(ErrorMessage = "Confirma la contraseña nueva.")]
+    [DataType(DataType.Password)]
+    [Compare(nameof(Password), ErrorMessage = "Las contraseñas no coinciden.")]
+    public string ConfirmPassword { get; set; } = "";
+
+    public bool EnlaceValido { get; private set; }
+    public bool Cambiada { get; private set; }
+
+    /// <summary>Códigos de recuperación nuevos (los anteriores quedaron anulados).</summary>
+    public IReadOnlyList<string> CodigosRecuperacion { get; private set; } = Array.Empty<string>();
+
+    public async Task<IActionResult> OnGetAsync()
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = default!;
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Password)]
-        public string Password { get; set; } = default!;
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [DataType(DataType.Password)]
-        [Display(Name = "Confirm password")]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-        public string? ConfirmPassword { get; set; }
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [Required]
-        public string Code { get; set; } = default!;
-
-    }
-
-    public IActionResult OnGet(string? code = null)
-    {
-        if (code == null)
-        {
-            return BadRequest("A code must be supplied for password reset.");
-        }
-        else
-        {
-            Input = new InputModel
-            {
-                Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code))
-            };
-            return Page();
-        }
+        EnlaceValido = await _recuperacion.ValidarAsync(Usuario, Codigo) is not null;
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
         {
+            EnlaceValido = await _recuperacion.ValidarAsync(Usuario, Codigo) is not null;
             return Page();
         }
 
-        var user = await _userManager.FindByEmailAsync(Input.Email);
-        if (user == null)
+        var cambio = await _recuperacion.RestablecerAsync(Usuario, Codigo, Password);
+        if (cambio is null) return Page(); // venció o ya se usó
+
+        EnlaceValido = true;
+        if (!cambio.Resultado.Succeeded)
         {
-            // Don't reveal that the user does not exist
-            return RedirectToPage("./ResetPasswordConfirmation");
+            foreach (var error in cambio.Resultado.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
+            return Page();
         }
 
-        var result = await _userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
-        if (result.Succeeded)
-        {
-            // Contraseña nueva: se levanta el bloqueo por intentos fallidos y queda en la auditoría.
-            await _userManager.SetLockoutEndDateAsync(user, null);
-            await _userManager.ResetAccessFailedCountAsync(user);
-            await HttpContext.RequestServices.GetRequiredService<Auditoria>().RegistrarAsync(Auditoria.ClaveCambiada, user);
-            return RedirectToPage("./ResetPasswordConfirmation");
-        }
-
-        foreach (var error in result.Errors)
-        {
-            ModelState.AddModelError(string.Empty, error.Description);
-        }
+        await HttpContext.RequestServices.GetRequiredService<Auditoria>().RegistrarAsync(Auditoria.ClaveCambiada, cambio.Usuario);
+        CodigosRecuperacion = cambio.CodigosRecuperacion;
+        Cambiada = true;
         return Page();
     }
 }

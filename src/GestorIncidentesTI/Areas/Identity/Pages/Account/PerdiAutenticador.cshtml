@@ -1,0 +1,62 @@
+@page
+@model PerdiAutenticadorModel
+@{
+    ViewData["Title"] = "Perdí mi autenticador";
+    Layout = "/Pages/Shared/_LayoutAcceso.cshtml";
+}
+
+<p class="tarjeta-paso">@(Model.ConfigurandoApp ? "Paso 2 de 2" : "Paso 1 de 2")</p>
+<h1 class="tarjeta-titulo">@ViewData["Title"]</h1>
+
+@if (!Model.ConfigurandoApp)
+{
+    <p class="tarjeta-subtitulo">
+        Para confirmar que eres tú, escribe el código de 6 dígitos que enviamos al correo de tu cuenta.
+        Después configurarás tu nueva app autenticadora.
+    </p>
+    @if (Model.Aviso is not null)
+    {
+        <p class="mfa-aviso" role="status">@Model.Aviso</p>
+    }
+
+    <form method="post" asp-page-handler="Verificar" asp-route-returnUrl="@Model.ReturnUrl">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div class="form-floating">
+            <label for="codigo" class="form-label">Código del correo</label>
+            <input id="codigo" name="codigo" class="form-control mfa-codigo" inputmode="numeric" autocomplete="one-time-code"
+                   maxlength="7" required autofocus />
+        </div>
+        <button type="submit">Continuar</button>
+    </form>
+
+    <div class="enlaces-acceso">
+        <form method="post" asp-page-handler="Reenviar" asp-route-returnUrl="@Model.ReturnUrl">
+            <button type="submit" class="boton-enlace">Enviar un código nuevo</button>
+        </form>
+        <a asp-page="./LoginWith2fa" asp-route-returnUrl="@Model.ReturnUrl">Volver a la verificación</a>
+    </div>
+}
+else
+{
+    <p class="tarjeta-subtitulo">
+        Escanea el código QR con tu nueva app autenticadora (Google Authenticator, Microsoft
+        Authenticator u otra) y escribe el código de 6 dígitos que muestra. Tu app anterior sigue
+        funcionando hasta que actives la nueva.
+    </p>
+    <div class="mfa-qr">@Html.Raw(Model.QrSvg)</div>
+    <p class="mfa-clave">¿No puedes escanear? Escribe esta clave en la app: <code>@Model.Clave</code></p>
+
+    <form method="post" asp-page-handler="Activar" asp-route-returnUrl="@Model.ReturnUrl">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div class="form-floating">
+            <label for="codigo" class="form-label">Código de la app nueva</label>
+            <input id="codigo" name="codigo" class="form-control mfa-codigo" inputmode="numeric" autocomplete="one-time-code"
+                   maxlength="7" required autofocus />
+        </div>
+        <button type="submit">Activar e ingresar</button>
+    </form>
+
+    <div class="enlaces-acceso">
+        <a asp-page="./Login">Volver al ingreso</a>
+    </div>
+}

@@ -44,5 +44,10 @@
     {
         <a asp-route-metodo="app" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe">Usar la app autenticadora</a>
     }
+    <a id="perdi-autenticador" asp-page="./PerdiAutenticador" asp-route-returnUrl="@Model.ReturnUrl">Perdí mi autenticador</a>
+    @if (Model.TieneCodigosRecuperacion)
+    {
+        <a asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">Usar un código de recuperación</a>
+    }
     <a asp-page="./Login">Volver al ingreso</a>
 </div>

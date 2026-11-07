@@ -20,7 +20,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddErrorDescriber<ErroresIdentidad>();
+
+// Al cambiar la contraseña o la app autenticadora se renueva el SecurityStamp: las demás
+// sesiones se cierran en la siguiente revalidación (a lo sumo 5 minutos).
+builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(5));
 
 // Identity está alojado bajo /Identity. Sin esta configuración, las páginas
 // protegidas redirigen erróneamente a /Account/Login y devuelven 404.
@@ -44,10 +49,13 @@ builder.Services.Configure<SecurityStampValidatorOptions>(options => options.OnR
     return Task.CompletedTask;
 });
 
-// Código por correo de la verificación en dos pasos (Brevo, misma clave que los avisos).
-builder.Services.AddHttpClient<DosPasos>(c => c.Timeout = TimeSpan.FromSeconds(10));
-
-builder.Services.AddSingleton<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, GestorIncidentesTI.Services.EmailSenderFalso>();
+// Correos de la cuenta (códigos, recuperación de contraseña o de acceso) por la API de Brevo,
+// con la misma configuración que los avisos; también es el IEmailSender de Identity.
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddHttpClient<CorreoBrevo>(c => c.Timeout = TimeSpan.FromSeconds(10));
+builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender>(sp => sp.GetRequiredService<CorreoBrevo>());
+builder.Services.AddScoped<DosPasos>();
+builder.Services.AddScoped<RecuperacionClave>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
    // Azure SQL sin servidor tarda en reanudarse tras la pausa automática y
@@ -69,7 +77,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "Gestor de Incidentes TI", Version = "v1" });
+    c.SwaggerDoc("v1", new() { Title = Portal.Nombre, Version = "v1" });
 });
 
 var app = builder.Build();
@@ -94,7 +102,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gestor de Incidentes TI v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{Portal.Nombre} v1");
         c.RoutePrefix = "swagger";
     });
 }

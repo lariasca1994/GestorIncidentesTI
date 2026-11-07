@@ -13,6 +13,7 @@
 {
     <p class="mfa-aviso" role="status">@Model.Mensaje</p>
 }
+<partial name="_CodigosRecuperacion" model="Model.CodigosNuevos" />
 
 @if (Model.Metodo is null)
 {
@@ -65,7 +66,21 @@
                 <button type="submit">Guardar</button>
             </form>
         }
+        <ul class="mfa-metodos">
+            <li>
+                <strong>Códigos de recuperación</strong>
+                <span>Te quedan @Model.CodigosRestantes</span>
+            </li>
+        </ul>
+        <p class="tarjeta-subtitulo">
+            Sirven para ingresar si no tienes a mano tu app autenticadora; cada uno se usa una vez.
+            Generar códigos nuevos anula los anteriores.
+        </p>
         <div class="enlaces-acceso">
+            <form method="post" asp-page-handler="Codigos">
+                <button type="submit" class="boton-enlace">Generar códigos de recuperación nuevos</button>
+            </form>
+            <a asp-page="./Manage/ChangePassword">Cambiar contraseña</a>
             <a asp-area="" asp-page="/Index">Volver al inicio</a>
         </div>
     }

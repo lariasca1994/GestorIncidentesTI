@@ -8,8 +8,8 @@ namespace GestorIncidentesTI.Services;
 /// paso (claim amr = mfa):
 /// - si la cuenta aún no tiene método, la única página disponible es la de elegirlo;
 /// - si ya lo tiene (sesión vieja o abierta solo con contraseña), se cierra y se vuelve a ingresar.
-/// Las páginas de Identity para apagar la verificación o usar códigos de recuperación
-/// llevan a Seguridad: la verificación no se puede desactivar.
+/// Las páginas de Identity para apagar la verificación o manejar los códigos de recuperación
+/// llevan a Seguridad: la verificación no se puede desactivar y los códigos se generan allí.
 /// </summary>
 public class DosPasosObligatorioMiddleware
 {
@@ -25,8 +25,7 @@ public class DosPasosObligatorioMiddleware
     {
         "/Identity/Account/Manage/TwoFactorAuthentication", "/Identity/Account/Manage/EnableAuthenticator",
         "/Identity/Account/Manage/Disable2fa", "/Identity/Account/Manage/ResetAuthenticator",
-        "/Identity/Account/Manage/GenerateRecoveryCodes", "/Identity/Account/Manage/ShowRecoveryCodes",
-        "/Identity/Account/LoginWithRecoveryCode"
+        "/Identity/Account/Manage/GenerateRecoveryCodes", "/Identity/Account/Manage/ShowRecoveryCodes"
     };
 
     private readonly RequestDelegate _next;

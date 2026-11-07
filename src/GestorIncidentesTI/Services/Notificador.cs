@@ -69,7 +69,7 @@ public class NotificadorBrevo : INotificador
 
         // El correo sale de la cuenta verificada en Brevo, pero se presenta con
         // el nombre de quien hizo la gestión y las respuestas le llegan a él.
-        var nombreBase = _configuration["Brevo:RemitenteNombre"] ?? "Gestor de Incidentes TI";
+        var nombreBase = Portal.NombreRemitente(_configuration["Brevo:RemitenteNombre"]);
         var nombreRemitente = actor is null || actor.Equals(remitente, StringComparison.OrdinalIgnoreCase)
             ? nombreBase
             : $"{actor} vía {nombreBase}";

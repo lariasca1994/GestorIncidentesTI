@@ -11,7 +11,9 @@ namespace GestorIncidentesTI.Areas.Identity.Pages.Account;
 /// <summary>
 /// Verificación en dos pasos de la cuenta. Sin método configurado es la única página
 /// disponible (primer ingreso o recién registrado): se elige app autenticadora o correo y se
-/// confirma con el primer código. Con método, permite agregar el que falta y elegir el preferido.
+/// confirma con el primer código. Con método, permite agregar el que falta, elegir el preferido,
+/// cambiar la contraseña y generar códigos de recuperación (los nuevos anulan los anteriores y se
+/// muestran una sola vez).
 /// </summary>
 [Authorize]
 public class SeguridadModel : PageModel
@@ -45,6 +47,12 @@ public class SeguridadModel : PageModel
     [TempData]
     public string? Mensaje { get; set; }
 
+    /// <summary>TempData con los códigos de recuperación recién generados (separados por espacio).</summary>
+    public const string ClaveCodigosNuevos = "CodigosRecuperacionNuevos";
+
+    public IReadOnlyList<string> CodigosNuevos { get; private set; } = Array.Empty<string>();
+    public int CodigosRestantes { get; private set; }
+
     /// <summary>Primer ingreso: todavía no hay método.</summary>
     public bool Eligiendo => !Estado.Configurado;
 
@@ -53,6 +61,8 @@ public class SeguridadModel : PageModel
         var (user, salida) = await CargarAsync();
         if (user is null) return salida!;
 
+        if (TempData[ClaveCodigosNuevos] is string nuevos)
+            CodigosNuevos = nuevos.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (Metodo == DosPasos.Correo)
             Aviso = await _dosPasos.EnviarCodigoAsync(user)
                 ? $"Enviamos un código a {user.Email}. Vence en 10 minutos."
@@ -95,6 +105,17 @@ public class SeguridadModel : PageModel
         return RedirectToPage();
     }
 
+    /// <summary>Códigos de recuperación nuevos: anulan todos los anteriores.</summary>
+    public async Task<IActionResult> OnPostCodigosAsync()
+    {
+        var (user, salida) = await CargarAsync();
+        if (user is null) return salida!;
+        if (Eligiendo) return RedirectToPage();
+        TempData[ClaveCodigosNuevos] = string.Join(' ', await _dosPasos.NuevosCodigosRecuperacionAsync(user));
+        Mensaje = "Generamos códigos de recuperación nuevos; los anteriores ya no sirven.";
+        return RedirectToPage();
+    }
+
     public async Task<IActionResult> OnPostPreferidoAsync()
     {
         var (user, salida) = await CargarAsync();
@@ -113,6 +134,7 @@ public class SeguridadModel : PageModel
 
         Estado = await _dosPasos.EstadoAsync(user);
         Email = user.Email;
+        CodigosRestantes = await _dosPasos.CodigosRecuperacionAsync(user);
 
         // Una sesión abierta solo con contraseña no puede tocar una cuenta que ya tiene método.
         if (Estado.Configurado && !DosPasosObligatorioMiddleware.TieneSegundoPaso(User))
