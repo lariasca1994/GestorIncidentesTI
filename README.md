@@ -165,8 +165,7 @@ Telegram se envían por separado: si uno falla, el otro sale igual.
 - Antes de publicar, lee [SECURITY.md](SECURITY.md) y ejecuta `git status` para comprobar
   que no se incluyen configuraciones locales, secretos, datos de prueba, `.vs`, `bin` u `obj`.
 - Las pruebas E2E corren en [qa-evidencia](https://d4i3vsgw7xwmh.cloudfront.net) de lunes a
-  viernes a las 11:00 y 17:00 (hora Bogotá): hasta el 31 de octubre de 2026 solo en la de
-  las 11:00, desde noviembre en ambas.
+  viernes, una vez al día a las 11:00 (hora Bogotá).
 - Pruebas unitarias con xUnit (`dotnet test`), también en cada push y pull request: recuperación
   de contraseña, "Perdí mi autenticador", códigos de recuperación, TOTP y correos.
 
