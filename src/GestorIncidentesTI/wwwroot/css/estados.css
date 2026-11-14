@@ -1,0 +1,61 @@
+/* Pantallas de estado (404, sin conexión, mantenimiento): tokens de estilos.css. */
+body.estado {
+    display: grid;
+    min-height: 100vh;
+    min-height: 100dvh;
+    place-items: center;
+    padding: 24px max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left));
+    background: radial-gradient(900px 480px at 85% -10%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 60%), var(--bg);
+}
+.estado-marco { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 440px); align-items: center; gap: 3rem; max-width: 880px; padding: 0; margin: 0; }
+.estado-corrida {
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--border);
+    border-top: 4px solid var(--primary);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 24px 50px -28px rgba(16, 41, 30, .45);
+    font-size: .85rem;
+    animation: gi-flota 5s ease-in-out infinite;
+}
+.estado-corrida p { margin: 0; }
+.estado-corrida__cabeza { display: flex; justify-content: space-between; padding-bottom: .75rem; border-bottom: 1px solid var(--border); color: var(--text-muted); font: 700 .72rem ui-monospace, Consolas, monospace; letter-spacing: .04em; }
+.estado-corrida__caso { display: flex; justify-content: space-between; gap: 1rem; padding: .9rem 0 .35rem; font-family: ui-monospace, Consolas, monospace; }
+.estado-corrida__caso code { overflow-wrap: anywhere; }
+.veredicto-404 { flex: none; padding: .1rem .5rem; border-radius: 6px; color: #f29a94; background: rgba(239, 68, 68, .16); font-weight: 700; animation: gi-parpadeo 2.4s ease-in-out infinite; }
+[data-theme="light"] .veredicto-404 { color: #b3261e; background: #fbe1e1; }
+.estado-corrida__esperado { padding-bottom: .9rem; border-bottom: 1px dashed var(--border); color: var(--text-muted); }
+.estado-corrida__pie { display: flex; align-items: center; justify-content: space-between; padding-top: .8rem; color: var(--text-muted); }
+.estado-etiqueta { margin: 0 0 .4rem; color: var(--primary); font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.estado-texto h1 { margin: 0 0 .75rem; font-size: clamp(1.5rem, 3.4vw, 2rem); line-height: 1.2; letter-spacing: -.02em; }
+.estado-texto p { color: var(--text-muted); line-height: 1.6; }
+.estado-texto code { padding: .1rem .35rem; border-radius: 5px; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--text); overflow-wrap: anywhere; }
+.estado-acciones { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+.estado-texto, .estado-corrida { animation-fill-mode: backwards; }
+.estado-texto { animation: gi-entrar .5s .08s var(--curva-suave) backwards; }
+.estado-centrado { max-width: 460px; text-align: center; }
+.estado-centrado .estado-acciones { justify-content: center; align-items: center; }
+.reintento { display: inline-flex; align-items: center; gap: .5rem; color: var(--text-muted); font-size: .88rem; }
+.reintento svg { width: 1.2rem; height: 1.2rem; transform: rotate(-90deg); }
+.reintento circle { fill: none; stroke-width: 3; }
+.reintento .fondo { stroke: var(--border); }
+.reintento .valor { stroke: var(--primary); stroke-dasharray: 1; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.senal { display: flex; justify-content: center; align-items: flex-end; gap: 6px; height: 46px; margin: 0 auto 1.25rem; }
+.senal span { width: 10px; border-radius: 4px; background: var(--primary); opacity: .25; animation: gi-senal 1.6s ease-in-out infinite; }
+.senal span:nth-child(1) { height: 30%; }
+.senal span:nth-child(2) { height: 55%; animation-delay: .15s; }
+.senal span:nth-child(3) { height: 80%; animation-delay: .3s; }
+.senal span:nth-child(4) { height: 100%; animation-delay: .45s; }
+@keyframes gi-senal { 50% { opacity: 1; } }
+@keyframes gi-flota { 50% { transform: translateY(-6px); } }
+@keyframes gi-parpadeo { 50% { opacity: .55; } }
+@media (max-width: 760px) {
+    .estado-marco { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
+    .estado-corrida { max-width: 360px; }
+}
+.estado-texto h1 { color: var(--text); }
+.estado .boton { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font: inherit; font-weight: 600; }
+.estado button.boton { border: 1px solid transparent; }
+.estado .estado-corrida__cabeza, .estado .estado-corrida__caso { color: var(--text-muted); }
+.estado .estado-corrida__caso { color: var(--text); }
+.estado .badge { font-size: .75rem; }

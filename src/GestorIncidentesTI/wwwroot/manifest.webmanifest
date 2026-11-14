@@ -1,0 +1,21 @@
+{
+  "name": "Gestor de incidentes TI",
+  "short_name": "Incidentes TI",
+  "description": "Incidentes de soporte con SLA, escalamiento N1-N2-N3 y trazabilidad.",
+  "lang": "es",
+  "start_url": "/dashboard?origen=app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0F1E1C",
+  "theme_color": "#0F2A26",
+  "icons": [
+    { "src": "/iconos/icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/iconos/icono-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/iconos/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/iconos/icono.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Incidentes", "url": "/Incidentes", "icons": [{ "src": "/iconos/icono-192.png", "sizes": "192x192" }] },
+    { "name": "Nuevo incidente", "url": "/Incidentes/Crear", "icons": [{ "src": "/iconos/icono-192.png", "sizes": "192x192" }] }
+  ]
+}
