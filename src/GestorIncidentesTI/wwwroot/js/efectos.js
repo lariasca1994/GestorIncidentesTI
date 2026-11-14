@@ -25,9 +25,13 @@
             return 50;
         } catch (e) { return 50; }
     }
+    // Una transición que se cancela (la otra página no participa o el usuario navega de nuevo)
+    // rechaza sus promesas en ambos documentos: se atrapan para que no quede error en la consola.
+    function calmar(t) { if (!t) return; [t.ready, t.finished, t.updateCallbackDone].forEach(function (pr) { if (pr) pr.catch(function () {}); }); }
+    window.addEventListener('pageswap', function (e) { calmar(e.viewTransition); });
     window.addEventListener('pagereveal', function (e) {
         // Si la otra página no participa, la transición se cancela: no es un error.
-        if (e.viewTransition) { e.viewTransition.ready.catch(function () {}); e.viewTransition.finished.catch(function () {}); }
+        calmar(e.viewTransition);
         if (!e.viewTransition || !window.navigation || !navigation.activation || !navigation.activation.from) return;
         if (rango(location.href) < rango(navigation.activation.from.url)) e.viewTransition.types.add('atras');
     });
