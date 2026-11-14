@@ -4,23 +4,95 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<h1>Dashboard de Incidentes</h1>
+@{
+    var abiertos = Model.IncidentesAbiertos;
+    int Riesgo(string n) => abiertos.Count(i => i.NivelRiesgo == n);
+    var total = abiertos.Count;
+    var cumplimiento = Math.Clamp(Model.PorcentajeCumplimiento, 0, 100);
+    var tonoCumplimiento = cumplimiento >= 90 ? "var(--exito)" : cumplimiento >= 70 ? "var(--bloqueo)" : "var(--falla)";
+    var prioridades = new[] { GestorIncidentesTI.Models.PrioridadIncidente.Critica, GestorIncidentesTI.Models.PrioridadIncidente.Alta, GestorIncidentesTI.Models.PrioridadIncidente.Media, GestorIncidentesTI.Models.PrioridadIncidente.Baja };
+    var porPrioridad = prioridades.Select(p => (Prioridad: p, Total: abiertos.Count(i => i.Prioridad == p))).ToList();
+    var mayor = porPrioridad.Count == 0 ? 0 : porPrioridad.Max(x => x.Total);
+    string Ancho(double v) => v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "%";
+    var riesgos = new[] { ("ok", "En tiempo"), ("riesgo", "En riesgo"), ("vencido", "Vencido") };
+}
 
-<section class="metricas">
-    <div class="tarjeta">
-        <span class="numero">@Model.TotalAbiertos</span>
-        <span class="etiqueta">Incidentes abiertos</span>
+<section class="tablero-cabeza">
+    <div>
+        <p class="antetitulo">Panel de control</p>
+        <h1>Dashboard de Incidentes</h1>
     </div>
-    <div class="tarjeta">
-        <span class="numero">@Model.TotalConSlaIncumplido</span>
-        <span class="etiqueta">SLA incumplido</span>
+    <a class="boton boton-primario" asp-page="/Incidentes/Crear">+ Nuevo incidente</a>
+</section>
+
+@* Franja de indicadores: cumplimiento con anillo y tres cifras clave. *@
+<section class="franja" aria-label="Resumen de incidentes">
+    <div class="franja-cobertura">
+        <div class="anillo-cobertura" style="--tono: @tonoCumplimiento" role="img" aria-label="Cumplimiento de SLA: @Model.PorcentajeCumplimiento%">
+            <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="pista" cx="50" cy="50" r="40" pathLength="100" /><circle class="avance" cx="50" cy="50" r="40" pathLength="100" style="stroke-dashoffset: @Ancho(100 - cumplimiento).TrimEnd('%')" /></svg>
+            <span aria-hidden="true">@Math.Round(cumplimiento)%</span>
+        </div>
+        <div>
+            <p class="franja-titulo">Cumplimiento de SLA</p>
+            <p class="franja-nota">@Model.PorcentajeCumplimiento% de los incidentes dentro de su SLA</p>
+        </div>
     </div>
-    <div class="tarjeta">
-        <span class="numero">@Model.PorcentajeCumplimiento%</span>
-        <span class="etiqueta">Cumplimiento de SLA</span>
+    <div style="--tono: var(--primary)">
+        <p class="franja-titulo">Abiertos</p>
+        <p class="franja-valor" data-contar>@Model.TotalAbiertos</p>
+        <p class="franja-nota">Incidentes abiertos</p>
+    </div>
+    <div style="--tono: var(--falla)">
+        <p class="franja-titulo">SLA incumplido</p>
+        <p class="franja-valor" data-contar>@Model.TotalConSlaIncumplido</p>
+        <p class="franja-nota">SLA incumplido</p>
+    </div>
+    <div style="--tono: var(--bloqueo)">
+        <p class="franja-titulo">En riesgo</p>
+        <p class="franja-valor" data-contar>@Riesgo("riesgo")</p>
+        <p class="franja-nota">cerca de vencer su SLA</p>
     </div>
 </section>
 
+<div class="tablero-rejilla">
+    <section class="panel-tablero">
+        <h2>Estado del SLA de los abiertos</h2>
+        <p class="texto-suave">Cuánto tiempo le queda a cada incidente abierto frente a su fecha límite.</p>
+        <div class="apilada" role="img" aria-label="@string.Join(", ", riesgos.Select(r => $"{r.Item2}: {Riesgo(r.Item1)}"))">
+            @foreach (var (clave, _) in riesgos)
+            {
+                if (Riesgo(clave) > 0 && total > 0)
+                {
+                    <span class="t-@clave" style="width: @Ancho(Riesgo(clave) * 100.0 / total)"></span>
+                }
+            }
+        </div>
+        <ul class="leyenda">
+            @foreach (var (clave, texto) in riesgos)
+            {
+                <li class="t-@clave"><b data-contar class="@(Riesgo(clave) == 0 ? "cifra-cero" : null)">@Riesgo(clave)</b><small><span class="badge badge-@clave">@texto</span></small></li>
+            }
+        </ul>
+    </section>
+
+    <section class="panel-tablero">
+        <h2>Abiertos por prioridad</h2>
+        <p class="texto-suave">Prioridad calculada con la matriz de impacto y urgencia.</p>
+        <ul class="barras-sev">
+            @foreach (var (prioridad, cuantos) in porPrioridad)
+            {
+                var clave = prioridad.ToString().ToLowerInvariant();
+                <li class="t-@clave">
+                    <span class="badge badge-@clave">@GestorIncidentesTI.Services.AvisosIncidente.Prioridad(prioridad)</span>
+                    <span class="pista"><i style="width: @Ancho(mayor > 0 ? cuantos * 100.0 / mayor : 0)"></i></span>
+                    <b data-contar class="@(cuantos == 0 ? "cifra-cero" : null)">@cuantos</b>
+                </li>
+            }
+        </ul>
+    </section>
+</div>
+
+<h2 class="tablero-subtitulo">Incidentes abiertos</h2>
 <table class="tabla-incidentes">
     <thead>
         <tr>

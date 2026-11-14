@@ -38,6 +38,15 @@
         }
         .boton:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
         .pie { margin: 18px 0 0; font-size: .82rem; }
+        .acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
+        .reintento { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .88rem; }
+        .reintento svg { width: 20px; height: 20px; transform: rotate(-90deg); }
+        .reintento circle { fill: none; stroke-width: 3; }
+        .reintento .fondo { stroke: var(--border); }
+        .reintento .valor { stroke: var(--primary); stroke-dasharray: 1; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+        .tarjeta { animation: entrar .5s cubic-bezier(.2, .8, .2, 1) backwards; }
+        @keyframes entrar { from { opacity: 0; transform: translateY(10px); } }
+        @media (prefers-reduced-motion: reduce) { .tarjeta { animation: none; } .reintento .valor { transition: none; } }
     </style>
 </head>
 <body>
@@ -50,8 +59,12 @@
             <dt>Datos</dt><dd>Seguros, sin cambios</dd>
             <dt>Acción</dt><dd>Vuelve a intentarlo más tarde</dd>
         </dl>
-        <a class="boton" href="/">Reintentar</a>
+        <div class="acciones">
+            <a class="boton" href="/">Reintentar</a>
+            <span class="reintento"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="fondo" cx="12" cy="12" r="9"/><circle id="valor" class="valor" cx="12" cy="12" r="9" pathLength="1"/></svg><span id="texto">Nuevo intento en 60 s</span></span>
+        </div>
         <p class="pie">Gestor de incidentes TI</p>
     </main>
+    <script src="/js/estado.js"></script>
 </body>
 </html>

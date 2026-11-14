@@ -107,8 +107,34 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// 404 con página propia (estática: no consulta la base). Solo para páginas pedidas con GET; la
+// API y las respuestas que ya traen contenido quedan como siempre.
+app.UseStatusCodePages(async contexto =>
+{
+    var http = contexto.HttpContext;
+    if (http.Response.StatusCode != StatusCodes.Status404NotFound || !HttpMethods.IsGet(http.Request.Method)
+        || http.Request.Path.StartsWithSegments("/api")) return;
+    http.Response.ContentType = "text/html; charset=utf-8";
+    await http.Response.SendFileAsync(app.Environment.WebRootFileProvider.GetFileInfo("no-encontrada.html"));
+});
+
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+// Aplicación instalable (PWA): el manifiesto necesita su tipo y el service worker no se guarda
+// en la caché del navegador, para que cada versión llegue al momento.
+var tiposArchivo = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+tiposArchivo.Mappings[".webmanifest"] = "application/manifest+json";
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = tiposArchivo,
+    OnPrepareResponse = archivo =>
+    {
+        if (archivo.File.Name == "sw.js")
+        {
+            archivo.Context.Response.Headers.CacheControl = "no-cache";
+            archivo.Context.Response.Headers["Service-Worker-Allowed"] = "/";
+        }
+    }
+});
 app.UseRouting();
 app.UseAuthentication();
 // Verificación en dos pasos obligatoria para toda sesión.

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- Página estática a propósito: la sirve el manejador de 404 sin consultar la base. -->
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0F2A26">
+    <title>Página no encontrada · Gestor de incidentes TI</title>
+    <link rel="icon" href="/iconos/icono.svg" type="image/svg+xml">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <script src="/js/tema-inicial.js"></script>
+    <link rel="stylesheet" href="/css/site.css">
+    <link rel="stylesheet" href="/css/efectos.css">
+    <link rel="stylesheet" href="/css/estados.css">
+</head>
+<body class="estado">
+    <main class="estado-marco">
+        <div class="estado-corrida" aria-hidden="true">
+            <p class="estado-corrida__cabeza"><span>INC-404 · Navegación</span><span>N1</span></p>
+            <p class="estado-corrida__caso"><span>GET <code class="ruta">/</code></span><span class="veredicto-404">404</span></p>
+            <p class="estado-corrida__esperado">Esperado: una página. Obtenido: ninguna. No hay a quién escalarlo.</p>
+            <div class="estado-corrida__pie"><span>SLA</span><span class="badge badge-cerrado">Sin asignar</span></div>
+        </div>
+        <div class="estado-texto">
+            <p class="estado-etiqueta">Página no encontrada</p>
+            <h1>Este incidente no está en la cola</h1>
+            <p>Buscamos <code class="ruta">/</code> y no existe. Quizá el enlace es viejo o el incidente ya no está disponible. Si tenías la sesión abierta, sigue abierta.</p>
+            <div class="estado-acciones">
+                <a class="boton boton-primario" href="/Incidentes">Ver incidentes</a>
+                <a class="boton boton-secundario" href="/">Volver al inicio</a>
+            </div>
+        </div>
+    </main>
+    <script src="/js/no-encontrada.js"></script>
+</body>
+</html>
