@@ -50,10 +50,11 @@ public class DashboardModel : PageModel
         var umbrales = await _db.SlaDefiniciones
             .ToDictionaryAsync(s => s.Prioridad, s => s.UmbralEscalamiento);
 
-        var abiertos = await query
-            .Where(i => i.Estado != EstadoIncidente.Resuelto && i.Estado != EstadoIncidente.Cerrado)
-            .OrderBy(i => i.FechaLimiteSla)
-            .ToListAsync();
+        // El estado se guarda como texto y algunos registros traen caracteres invisibles alrededor
+        // (por ejemplo un salto de línea): en SQL 'Cerrado' + salto de línea no es igual a 'Cerrado',
+        // pero .NET sí lo lee como Cerrado. Por eso el filtro por estado se aplica ya convertido.
+        var todos = await query.OrderBy(i => i.FechaLimiteSla).ToListAsync();
+        var abiertos = todos.Where(i => i.Estado is not (EstadoIncidente.Resuelto or EstadoIncidente.Cerrado)).ToList();
 
         var ahora = DateTime.UtcNow;
 
@@ -91,9 +92,9 @@ public class DashboardModel : PageModel
         }).ToList();
 
         TotalAbiertos = IncidentesAbiertos.Count;
-        TotalConSlaIncumplido = await query.CountAsync(i => i.SlaIncumplido)
+        TotalConSlaIncumplido = todos.Count(i => i.SlaIncumplido)
             + IncidentesAbiertos.Count(v => v.NivelRiesgo == "vencido");
-        PorcentajeCumplimiento = await _slaService.CalcularCumplimientoAsync(query);
+        PorcentajeCumplimiento = SlaService.CalcularCumplimiento(todos);
     }
 
     private static string FormatearTiempo(TimeSpan ts)
