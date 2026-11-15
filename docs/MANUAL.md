@@ -123,9 +123,13 @@ cuenta) eliges cómo recibirlo:
 | **App autenticadora** (recomendado) | Escaneas el código QR con Google Authenticator, Microsoft Authenticator u otra app; desde ese momento la app muestra un código nuevo cada 30 segundos, incluso sin internet. Si no puedes escanear, escribe la clave que aparece bajo el QR. |
 | **Código por correo** | Cada vez que ingresas te llega un código de 6 dígitos que vence en 10 minutos y sirve una sola vez. Puedes pedir hasta 3 códigos cada 10 minutos. |
 
+El código se escribe en **seis casillas**, una por dígito: puedes teclearlo o pegarlo completo.
+Un candado sobre el título se abre al enviar el código completo y se sacude si no es válido; con la
+app autenticadora, un anillo muestra cuántos segundos faltan para que la app cambie de código.
+
 Confirma el método escribiendo el primer código y pulsando **Activar**. En los siguientes ingresos
 escribe el código y pulsa **Verificar**; si tienes los dos métodos, la pantalla ofrece usar el otro.
-Desde **Seguridad** (menú superior) puedes **agregar el método que no elegiste**, escoger cuál se
+Desde **Seguridad** (menú lateral; en el celular, en **Más**) puedes **agregar el método que no elegiste**, escoger cuál se
 pide **por defecto**, **cambiar la contraseña** y **generar códigos de recuperación**. La
 verificación no se puede desactivar.
 
@@ -268,6 +272,25 @@ los plazos y sube de nivel los que superaron su umbral.
 
 **¿Puedo cambiarme de proyecto?** No desde la aplicación; crea una cuenta nueva eligiendo el otro
 proyecto.
+
+**¿Puedo instalarlo como aplicación?** Sí. En Chrome o Edge usa **Instalar aplicación** (ícono
+en la barra de direcciones o menú ⋮); en el iPhone, en Safari, **Compartir → Agregar a inicio**. Se
+abre en su propia ventana y entra directo al dashboard.
+
+**¿Qué pasa si me quedo sin internet?** Aparece la pantalla **Sin conexión**, que reintenta sola
+cada pocos segundos (o con **Reintentar ahora**) y vuelve a la página cuando hay red.
+
+![Pantalla sin conexión con reintento automático](img/manual/13-sin-conexion.png)
+
+**Abrí un enlace y dice "Este incidente no está en la cola".** La dirección no existe (un enlace
+viejo o un incidente que ya no está disponible). Usa **Ver incidentes** o **Volver al inicio**; si
+tenías la sesión abierta, sigue abierta.
+
+![Página no encontrada](img/manual/12-no-encontrada.png)
+
+**¿Qué significa la pantalla de mantenimiento?** La base de datos se pausa sin uso y tarda unos
+minutos en reanudarse. La pantalla reintenta sola cada minuto (un anillo muestra los segundos que
+faltan), hasta cinco veces; después puedes pulsar **Reintentar**.
 
 **No me llegó el correo de recuperación.** Revisa la carpeta de spam y que escribiste el correo de
 la cuenta. Si pediste varios enlaces o códigos, usa el último: los anteriores dejan de servir.
