@@ -2,6 +2,8 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0.14 AS base
 WORKDIR /app
+# Las horas que muestra la aplicación son las de Bogotá.
+ENV TZ=America/Bogota
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 

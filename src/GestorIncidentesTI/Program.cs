@@ -6,6 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Fechas, horas y números en español de Colombia (19/09/2026, 91,7 %), sin importar el servidor.
+var culturaColombia = new System.Globalization.CultureInfo("es-CO");
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = culturaColombia;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culturaColombia;
+
 // La cadena de conexión real va en variables de entorno o en Azure App Service
 // Configuration (Connection Strings) — nunca en este archivo ni committeada.
 var connectionString = builder.Configuration.GetConnectionString("Default")
@@ -81,6 +86,13 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(culturaColombia),
+    SupportedCultures = [culturaColombia],
+    SupportedUICultures = [culturaColombia],
+});
 
 // Las migraciones se aplican como paso explícito de despliegue. Así la cuenta
 // de ejecución de la aplicación no necesita permisos de cambio de esquema.

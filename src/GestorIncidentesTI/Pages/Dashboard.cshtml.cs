@@ -101,7 +101,10 @@ public class DashboardModel : PageModel
 
     private static string FormatearTiempo(TimeSpan ts)
     {
+        // Legible a cualquier escala: "57 d 21 h", "5 h 12 min" o "40 min".
         var abs = ts.Duration();
-        return $"{(int)abs.TotalHours}h {abs.Minutes}m";
+        if (abs.TotalDays >= 2) return $"{(int)abs.TotalDays} d {abs.Hours} h";
+        if (abs.TotalHours >= 1) return $"{(int)abs.TotalHours} h {abs.Minutes} min";
+        return $"{Math.Max(1, abs.Minutes)} min";
     }
 }
