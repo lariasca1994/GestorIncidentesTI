@@ -192,14 +192,32 @@ Se muestran **una sola vez**: guárdalos en un lugar seguro. Seguridad indica cu
 
 ![Dashboard con indicadores y lista de incidentes](img/manual/03-dashboard.png)
 
-| Indicador | Qué significa |
+| Bloque | Qué significa |
 |---|---|
-| Incidentes abiertos | Incidentes que aún no se han resuelto ni cerrado |
-| SLA incumplido | Incidentes que pasaron su fecha límite |
-| Cumplimiento de SLA | Porcentaje de incidentes atendidos dentro del plazo |
+| Cumplimiento de SLA (anillo) | Porcentaje de incidentes resueltos o cerrados que se atendieron dentro del plazo. El anillo es verde desde 90 %, ámbar desde 70 % y rojo por debajo |
+| Abiertos | Incidentes que aún no se han resuelto ni cerrado |
+| SLA incumplido | Incidentes (abiertos o ya cerrados) que pasaron su fecha límite; cada uno cuenta una vez |
+| En riesgo | Abiertos que están cerca de vencer su SLA |
+| Estado del SLA de los abiertos | Una barra con la proporción de abiertos en tiempo, en riesgo y vencidos, y la cifra de cada grupo |
+| Abiertos por prioridad | Una barra por prioridad (Crítica, Alta, Media, Baja), proporcional a la que tiene más abiertos |
 
-La tabla muestra cada incidente con su **Prioridad**, **Estado**, **Nivel** (N1, N2 o N3) y el
-tiempo restante o vencido de su **SLA**.
+La tabla **Incidentes abiertos** muestra cada uno con su **Prioridad**, **Estado**, **Nivel** (N1, N2
+o N3) y el tiempo restante o vencido de su **SLA**. **+ Nuevo incidente** abre el formulario (ver 4.5).
+
+**Menú lateral.** A la izquierda están **Inicio**, **Dashboard**, **Incidentes** (y **Proyectos**
+para el administrador); una luz turquesa marca la sección actual. Al pie están tu cuenta,
+**Seguridad** y **Cerrar sesión**. **Compactar menú** lo reduce a solo íconos (al pasar el cursor
+aparece el nombre de cada uno) y la preferencia se recuerda en ese equipo.
+
+![Menú lateral compacto con el nombre de la opción al pasar el cursor](img/manual/09-menu-compacto.png)
+
+**En la tablet en vertical y en el celular** el menú se convierte en una **barra inferior**
+translúcida (Inicio, Dashboard, Incidentes y **Más**, que abre una hoja desde abajo con Seguridad y
+Cerrar sesión). El dashboard se reacomoda solo al girar la pantalla.
+
+![Dashboard en una tablet en vertical](img/manual/10-tablet-vertical.png)
+
+![Dashboard en el celular con la hoja Más abierta](img/manual/11-movil-mas.png)
 
 ### 4.4 Incidentes
 
