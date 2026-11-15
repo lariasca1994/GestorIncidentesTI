@@ -28,9 +28,12 @@ public class SlaService : ISlaService
 
     public async Task<int> EvaluarEscalamientosAsync()
     {
-        var incidentesActivos = await _db.Incidentes
-            .Where(i => i.Estado == EstadoIncidente.Abierto || i.Estado == EstadoIncidente.EnProgreso || i.Estado == EstadoIncidente.Escalado)
-            .ToListAsync();
+        // El estado se guarda como texto y algunos registros traen caracteres invisibles alrededor
+        // (por ejemplo un salto de línea): en SQL 'Cerrado' + salto de línea no es igual a 'Cerrado',
+        // pero .NET sí lo lee como Cerrado. Por eso el filtro por estado se aplica ya convertido.
+        var incidentesActivos = (await _db.Incidentes.ToListAsync())
+            .Where(i => i.Estado is EstadoIncidente.Abierto or EstadoIncidente.EnProgreso or EstadoIncidente.Escalado)
+            .ToList();
 
         var slaPorPrioridad = await _db.SlaDefiniciones.ToDictionaryAsync(s => s.Prioridad);
 
@@ -105,24 +108,21 @@ public class SlaService : ISlaService
 
     public async Task<double> CalcularCumplimientoAsync()
     {
-        var resueltos = await _db.Incidentes
-            .Where(i => i.Estado == EstadoIncidente.Resuelto || i.Estado == EstadoIncidente.Cerrado)
-            .ToListAsync();
-
-        return CalcularCumplimiento(resueltos);
+        return CalcularCumplimiento(await _db.Incidentes.ToListAsync());
     }
 
     public async Task<double> CalcularCumplimientoAsync(IQueryable<Incidente> incidentes)
     {
-        var resueltos = await incidentes
-            .Where(i => i.Estado == EstadoIncidente.Resuelto || i.Estado == EstadoIncidente.Cerrado)
-            .ToListAsync();
-
-        return CalcularCumplimiento(resueltos);
+        return CalcularCumplimiento(await incidentes.ToListAsync());
     }
 
-    private static double CalcularCumplimiento(IReadOnlyCollection<Incidente> resueltos)
+    /// <summary>Porcentaje de incidentes resueltos o cerrados que cumplieron su SLA.</summary>
+    public static double CalcularCumplimiento(IEnumerable<Incidente> incidentes)
     {
+        // El estado se guarda como texto y algunos registros traen caracteres invisibles alrededor
+        // (por ejemplo un salto de línea): en SQL 'Cerrado' + salto de línea no es igual a 'Cerrado',
+        // pero .NET sí lo lee como Cerrado. Por eso el filtro por estado se aplica ya convertido.
+        var resueltos = incidentes.Where(i => i.Estado is EstadoIncidente.Resuelto or EstadoIncidente.Cerrado).ToList();
         if (resueltos.Count == 0) return 100.0;
 
         var cumplidos = resueltos.Count(i => !i.SlaIncumplido);

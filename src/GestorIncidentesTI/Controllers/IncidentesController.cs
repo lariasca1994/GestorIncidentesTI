@@ -163,11 +163,11 @@ public class IncidentesController : ControllerBase
         var query = await ObtenerConsultaConAlcanceAsync();
         if (query is null) return Forbid();
 
-        var abiertos = await query.CountAsync(i =>
-            i.Estado != EstadoIncidente.Resuelto && i.Estado != EstadoIncidente.Cerrado);
-
-        var incumplidos = await query.CountAsync(i => i.SlaIncumplido);
-        var cumplimiento = await _slaService.CalcularCumplimientoAsync(query);
+        // El filtro por estado se aplica ya convertido (ver SlaService.CalcularCumplimiento).
+        var todos = await query.ToListAsync();
+        var abiertos = todos.Count(i => i.Estado is not (EstadoIncidente.Resuelto or EstadoIncidente.Cerrado));
+        var incumplidos = todos.Count(i => i.SlaIncumplido);
+        var cumplimiento = SlaService.CalcularCumplimiento(todos);
 
         return Ok(new
         {
