@@ -535,8 +535,10 @@ body.portada-cuerpo {
 }
 
 .mfa-qr svg {
+  display: block;
   width: 200px;
   height: 200px;
+  max-width: 100%;
   padding: 8px;
   border-radius: 0.6rem;
   background: #ffffff;

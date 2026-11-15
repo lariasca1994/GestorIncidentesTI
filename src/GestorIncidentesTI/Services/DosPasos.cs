@@ -88,7 +88,8 @@ public class DosPasos
     public static string QrSvg(string email, string clave)
     {
         using var datos = new QRCodeGenerator().CreateQrCode(UriOtpauth(email, clave), QRCodeGenerator.ECCLevel.M);
-        return new SvgQRCode(datos).GetGraphic(5);
+        // Con viewBox (sin ancho/alto fijos) el CSS lo escala; con tamaño fijo el navegador lo recortaba.
+        return new SvgQRCode(datos).GetGraphic(5, "#000000", "#ffffff", true, SvgQRCode.SizingMode.ViewBoxAttribute);
     }
 
     /// <summary>
