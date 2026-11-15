@@ -92,8 +92,10 @@ public class DashboardModel : PageModel
         }).ToList();
 
         TotalAbiertos = IncidentesAbiertos.Count;
-        TotalConSlaIncumplido = todos.Count(i => i.SlaIncumplido)
-            + IncidentesAbiertos.Count(v => v.NivelRiesgo == "vencido");
+        // Cada incidente cuenta una vez: el escalamiento ya marca SlaIncumplido al vencer, así que
+        // sumar además los abiertos vencidos los contaba dos veces.
+        var vencidosAbiertos = IncidentesAbiertos.Where(v => v.NivelRiesgo == "vencido").Select(v => v.Id).ToHashSet();
+        TotalConSlaIncumplido = todos.Count(i => i.SlaIncumplido || vencidosAbiertos.Contains(i.Id));
         PorcentajeCumplimiento = SlaService.CalcularCumplimiento(todos);
     }
 
