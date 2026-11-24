@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.14 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.15 AS base
 WORKDIR /app
 # Las horas que muestra la aplicación son las de Bogotá.
 ENV TZ=America/Bogota
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.403 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.404 AS build
 WORKDIR /src
 COPY ["src/GestorIncidentesTI/GestorIncidentesTI.csproj", "src/GestorIncidentesTI/"]
 RUN dotnet restore "src/GestorIncidentesTI/GestorIncidentesTI.csproj"
